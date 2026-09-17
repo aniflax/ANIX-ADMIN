@@ -1566,8 +1566,8 @@ export default function Leaves() {
         axios.get('/api/leave/requests')
       ]);
       setLeaveTypes(types.data);
-      // For Sevaks and HODs (when acting as a sevak): only own requests
-      const myReqs = reqs.data.filter(r => r.sevak_id === user.id);
+      // For Employees and HODs (when acting as a employee): only own requests
+      const myReqs = reqs.data.filter(r => r.employee_id === user.id);
       setRequests(myReqs);
     } catch (e) { console.error(e); }
     finally { setLoading(false); }
@@ -1663,8 +1663,8 @@ export default function Leaves() {
       <LeaveRequestDetailDialog
         open={!!dialogRequest}
         request={dialogRequest}
-        viewer="SEVAK"
-        sevaks={[user].filter(Boolean)}
+        viewer="EMPLOYEE"
+        employees={[user].filter(Boolean)}
         defaultWeekOff={user?.default_week_off}
         onClose={handleDialogClose}
         onActionComplete={() => fetchData()}

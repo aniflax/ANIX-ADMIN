@@ -14,7 +14,7 @@ export default function Departments() {
   const location = useLocation();
   const navigate = useNavigate();
   const [departments, setDepartments] = useState([]);
-  const [allSevaks, setAllSevaks] = useState([]);
+  const [allEmployees, setAllEmployees] = useState([]);
   const [allLocations, setAllLocations] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -24,7 +24,7 @@ export default function Departments() {
   const [isAddOpen, setIsAddOpen] = useState(false);
   const [editDept, setEditDept] = useState(null);
   const [viewDept, setViewDept] = useState(null);
-  const [deptSevaks, setDeptSevaks] = useState([]);
+  const [deptEmployees, setDeptEmployees] = useState([]);
 
   // Dialog-local error states
   const [addError, setAddError] = useState('');
@@ -50,13 +50,13 @@ export default function Departments() {
 
   const fetchData = async () => {
     try {
-      const [deptRes, sevaksRes, locRes] = await Promise.all([
+      const [deptRes, employeesRes, locRes] = await Promise.all([
         api.get('/api/departments/'),
-        api.get('/api/sevaks/'),
+        api.get('/api/employees/'),
         api.get('/api/locations/')
       ]);
       setDepartments(deptRes.data.sort((a, b) => a.name.localeCompare(b.name)));
-      setAllSevaks(sevaksRes.data);
+      setAllEmployees(employeesRes.data);
       setAllLocations(locRes.data);
     } catch (err) {
       setError(err.response?.data?.detail || 'Failed to fetch data');
@@ -160,8 +160,8 @@ export default function Departments() {
     try {
       const deptRes = await api.get(`/api/departments/${dept.id}`);
       setViewDept(deptRes.data);
-      const sevaksRes = await api.get(`/api/sevaks/?department_id=${dept.id}`);
-      setDeptSevaks(sevaksRes.data);
+      const employeesRes = await api.get(`/api/employees/?department_id=${dept.id}`);
+      setDeptEmployees(employeesRes.data);
     } catch (err) {
       setError(err.response?.data?.detail || 'Failed to load department details');
     }
@@ -213,58 +213,58 @@ export default function Departments() {
     }
   };
 
-  const promoteToHod = async (sevakId) => {
+  const promoteToHod = async (employeeId) => {
     try {
-      await api.put(`/api/departments/${viewDept.id}`, { hod_id: sevakId });
+      await api.put(`/api/departments/${viewDept.id}`, { hod_id: employeeId });
       await refreshViewDept();
       fetchData();
-      setSuccess('Sevak promoted to HOD');
+      setSuccess('Employee promoted to HOD');
       setTimeout(() => setSuccess(''), 2000);
     } catch (err) {
       setError(err.response?.data?.detail || 'Failed to promote');
     }
   };
 
-  const deactivateSevak = async (sevakId) => {
+  const deactivateEmployee = async (employeeId) => {
     try {
-      await api.put(`/api/sevaks/${sevakId}/admin`, { department_id: null, role: 'SEVAK' });
-      const res = await api.get(`/api/sevaks/?department_id=${viewDept.id}`);
-      setDeptSevaks(res.data);
-      setSuccess('Sevak removed from department');
+      await api.put(`/api/employees/${employeeId}/admin`, { department_id: null, role: 'EMPLOYEE' });
+      const res = await api.get(`/api/employees/?department_id=${viewDept.id}`);
+      setDeptEmployees(res.data);
+      setSuccess('Employee removed from department');
       setTimeout(() => setSuccess(''), 2000);
     } catch (err) {
       setError(err.response?.data?.detail || 'Failed to remove');
     }
   };
 
-  const [sevaksToAdd, setSevaksToAdd] = useState([]);
-  const [addSevakLoading, setAddSevakLoading] = useState(false);
+  const [employeesToAdd, setEmployeesToAdd] = useState([]);
+  const [addEmployeeLoading, setAddEmployeeLoading] = useState(false);
 
-  const getAvailableSevaks = () => allSevaks.filter((sevak) => !sevak.department_id);
+  const getAvailableEmployees = () => allEmployees.filter((employee) => !employee.department_id);
 
-  const handleAddSevaks = async () => {
-    if (sevaksToAdd.length === 0 || !viewDept) return;
-    setAddSevakLoading(true);
+  const handleAddEmployees = async () => {
+    if (employeesToAdd.length === 0 || !viewDept) return;
+    setAddEmployeeLoading(true);
     try {
-      for (const sevak of sevaksToAdd) {
-        await api.put(`/api/sevaks/${sevak.id}/admin`, { department_id: viewDept.id });
+      for (const employee of employeesToAdd) {
+        await api.put(`/api/employees/${employee.id}/admin`, { department_id: viewDept.id });
       }
-      setSevaksToAdd([]);
-      const [deptRes, sevaksRes, deptSevaksRes] = await Promise.all([
+      setEmployeesToAdd([]);
+      const [deptRes, employeesRes, deptEmployeesRes] = await Promise.all([
         api.get(`/api/departments/${viewDept.id}`),
-        api.get('/api/sevaks/'),
-        api.get(`/api/sevaks/?department_id=${viewDept.id}`),
+        api.get('/api/employees/'),
+        api.get(`/api/employees/?department_id=${viewDept.id}`),
       ]);
       setViewDept(deptRes.data);
-      setAllSevaks(sevaksRes.data);
-      setDeptSevaks(deptSevaksRes.data);
+      setAllEmployees(employeesRes.data);
+      setDeptEmployees(deptEmployeesRes.data);
       fetchData();
-      setSuccess(`Added ${sevaksToAdd.length} sevak${sevaksToAdd.length === 1 ? '' : 's'} to ${viewDept.name}`);
+      setSuccess(`Added ${employeesToAdd.length} employee${employeesToAdd.length === 1 ? '' : 's'} to ${viewDept.name}`);
       setTimeout(() => setSuccess(''), 2500);
     } catch (err) {
-      setError(err.response?.data?.detail || 'Failed to allocate sevaks');
+      setError(err.response?.data?.detail || 'Failed to allocate employees');
     } finally {
-      setAddSevakLoading(false);
+      setAddEmployeeLoading(false);
     }
   };
 
@@ -274,12 +274,12 @@ export default function Departments() {
     return allLocations.filter(l => !assignedIds.includes(l.id));
   };
 
-  const getSevakName = (sevakId) => {
-    const sevak = allSevaks.find(s => s.id === sevakId);
-    return sevak ? `${sevak.first_name} ${sevak.last_name}` : null;
+  const getEmployeeName = (employeeId) => {
+    const employee = allEmployees.find(s => s.id === employeeId);
+    return employee ? `${employee.first_name} ${employee.last_name}` : null;
   };
 
-  const getHodCandidateOptions = () => allSevaks.filter((sevak) => sevak.role === 'SEVAK');
+  const getHodCandidateOptions = () => allEmployees.filter((employee) => employee.role === 'EMPLOYEE');
 
   if (loading) return <CircularProgress />;
 
@@ -301,7 +301,7 @@ export default function Departments() {
               <TableCell><b>Description</b></TableCell>
               <TableCell><b>HOD</b></TableCell>
               <TableCell><b>Offices</b></TableCell>
-              <TableCell><b>Sevaks</b></TableCell>
+              <TableCell><b>Employees</b></TableCell>
               <TableCell align="center"><b>Actions</b></TableCell>
             </TableRow>
           </TableHead>
@@ -314,7 +314,7 @@ export default function Departments() {
                   </Button>
                 </TableCell>
                 <TableCell>{dept.description || '-'}</TableCell>
-                <TableCell>{getSevakName(dept.hod_id) || <Typography variant="caption" color="text.secondary">Unassigned</Typography>}</TableCell>
+                <TableCell>{getEmployeeName(dept.hod_id) || <Typography variant="caption" color="text.secondary">Unassigned</Typography>}</TableCell>
                 <TableCell>
                   <Box display="flex" gap={0.5} flexWrap="wrap">
                     {dept.locations?.length > 0 ? dept.locations.map((loc) => (
@@ -322,7 +322,7 @@ export default function Departments() {
                     )) : <Typography variant="caption" color="text.secondary">None</Typography>}
                   </Box>
                 </TableCell>
-                <TableCell>{dept.sevak_count}</TableCell>
+                <TableCell>{dept.employee_count}</TableCell>
                 <TableCell align="center">
                   <IconButton size="small" color="primary" onClick={() => openEditDialog(dept)}><EditIcon fontSize="small" /></IconButton>
                   <IconButton size="small" color="error" onClick={() => handleDelete(dept.id)}><DeleteIcon fontSize="small" /></IconButton>
@@ -345,7 +345,7 @@ export default function Departments() {
               onChange={(e) => setAddForm({ ...addForm, description: e.target.value })} />
             <Autocomplete
               options={getHodCandidateOptions()}
-              getOptionLabel={(opt) => `${opt.first_name} ${opt.last_name} (${opt.sevak_id})`}
+              getOptionLabel={(opt) => `${opt.first_name} ${opt.last_name} (${opt.employee_id})`}
               value={getHodCandidateOptions().find(s => s.id === addForm.hod_id) || null}
               onChange={(e, val) => setAddForm({ ...addForm, hod_id: val?.id || '' })}
               renderInput={(params) => <TextField {...params} label="Assign HOD" />}
@@ -379,7 +379,7 @@ export default function Departments() {
               onChange={(e) => setEditForm({ ...editForm, description: e.target.value })} />
             <Autocomplete
               options={getHodCandidateOptions()}
-              getOptionLabel={(opt) => `${opt.first_name} ${opt.last_name} (${opt.sevak_id})`}
+              getOptionLabel={(opt) => `${opt.first_name} ${opt.last_name} (${opt.employee_id})`}
               value={getHodCandidateOptions().find(s => s.id === editForm.hod_id) || null}
               onChange={(e, val) => setEditForm({ ...editForm, hod_id: val?.id || '' })}
               renderInput={(params) => <TextField {...params} label="Assign HOD" />}
@@ -411,14 +411,14 @@ export default function Departments() {
           <Grid container spacing={2} mb={3}>
             <Grid item xs={12} sm={4}>
               <Paper variant="outlined" sx={{ p: 2, textAlign: 'center' }}>
-                <Typography color="text.secondary" variant="caption">Sevaks</Typography>
-                <Typography variant="h6">{deptSevaks.length}</Typography>
+                <Typography color="text.secondary" variant="caption">Employees</Typography>
+                <Typography variant="h6">{deptEmployees.length}</Typography>
               </Paper>
             </Grid>
             <Grid item xs={12} sm={4}>
               <Paper variant="outlined" sx={{ p: 2, textAlign: 'center' }}>
                 <Typography color="text.secondary" variant="caption">HOD</Typography>
-                <Typography variant="h6">{getSevakName(viewDept?.hod_id) || 'None'}</Typography>
+                <Typography variant="h6">{getEmployeeName(viewDept?.hod_id) || 'None'}</Typography>
               </Paper>
             </Grid>
             <Grid item xs={12} sm={4}>
@@ -464,16 +464,16 @@ export default function Departments() {
             </Box>
           )}
 
-          <Typography variant="h6" mb={2}>Allocate Sevaks</Typography>
-          {getAvailableSevaks().length > 0 ? (
+          <Typography variant="h6" mb={2}>Allocate Employees</Typography>
+          {getAvailableEmployees().length > 0 ? (
             <Box display="flex" gap={2} alignItems={{ xs: 'stretch', sm: 'center' }} mb={3} flexDirection={{ xs: 'column', sm: 'row' }}>
               <Autocomplete
                 multiple
-                options={getAvailableSevaks()}
-                getOptionLabel={(opt) => `${opt.first_name} ${opt.last_name} (${opt.sevak_id})`}
-                value={sevaksToAdd}
-                onChange={(e, val) => setSevaksToAdd(val)}
-                renderInput={(params) => <TextField {...params} label="Add unassigned sevaks" size="small" placeholder="Select sevaks" />}
+                options={getAvailableEmployees()}
+                getOptionLabel={(opt) => `${opt.first_name} ${opt.last_name} (${opt.employee_id})`}
+                value={employeesToAdd}
+                onChange={(e, val) => setEmployeesToAdd(val)}
+                renderInput={(params) => <TextField {...params} label="Add unassigned employees" size="small" placeholder="Select employees" />}
                 renderTags={(value, getTagProps) => value.map((opt, index) => (
                   <Chip {...getTagProps({ index })} key={opt.id} label={`${opt.first_name} ${opt.last_name}`} size="small" />
                 ))}
@@ -482,20 +482,20 @@ export default function Departments() {
               <Button
                 variant="contained"
                 size="small"
-                onClick={handleAddSevaks}
-                disabled={sevaksToAdd.length === 0 || addSevakLoading}
+                onClick={handleAddEmployees}
+                disabled={employeesToAdd.length === 0 || addEmployeeLoading}
                 sx={{ width: { xs: '100%', sm: 'auto' } }}
               >
-                {addSevakLoading ? 'Adding...' : 'Add Sevak'}
+                {addEmployeeLoading ? 'Adding...' : 'Add Employee'}
               </Button>
             </Box>
           ) : (
-            <Typography variant="body2" color="text.secondary" mb={3}>No unassigned sevaks available.</Typography>
+            <Typography variant="body2" color="text.secondary" mb={3}>No unassigned employees available.</Typography>
           )}
 
-          <Typography variant="h6" mb={2}>Allocated Sevaks</Typography>
+          <Typography variant="h6" mb={2}>Allocated Employees</Typography>
           <List>
-            {deptSevaks.map((s, idx) => (
+            {deptEmployees.map((s, idx) => (
               <React.Fragment key={s.id}>
                 <ListItem
                   sx={{ alignItems: { xs: 'flex-start', sm: 'center' }, flexDirection: { xs: 'column', sm: 'row' }, gap: { xs: 1.5, sm: 0 } }}
@@ -503,21 +503,21 @@ export default function Departments() {
                 >
                   <ListItemText primary={
                     <Box display="flex" alignItems="center" gap={1}>
-                      <b>{s.first_name} {s.last_name} ({s.sevak_id})</b>
+                      <b>{s.first_name} {s.last_name} ({s.employee_id})</b>
                       {viewDept?.hod_id === s.id && <Chip label="HOD" size="small" color="error" />}
                     </Box>
                   }
                     secondary={`Role: ${s.role} | Status: ${s.status}`} />
                   <Box sx={{ display: 'flex', gap: 1, width: { xs: '100%', sm: 'auto' }, flexDirection: { xs: 'column', sm: 'row' } }}>
                     <Button variant="outlined" size="small" color="primary" sx={{ mr: 1 }}
-                      onClick={() => promoteToHod(s.id)} disabled={s.role !== 'SEVAK'}>Promote to HOD</Button>
-                    <Button variant="outlined" size="small" color="error" onClick={() => deactivateSevak(s.id)}>Remove</Button>
+                      onClick={() => promoteToHod(s.id)} disabled={s.role !== 'EMPLOYEE'}>Promote to HOD</Button>
+                    <Button variant="outlined" size="small" color="error" onClick={() => deactivateEmployee(s.id)}>Remove</Button>
                   </Box>
                 </ListItem>
-                {idx < deptSevaks.length - 1 && <Divider />}
+                {idx < deptEmployees.length - 1 && <Divider />}
               </React.Fragment>
             ))}
-            {deptSevaks.length === 0 && <Typography color="text.secondary" px={2}>No sevaks allocated.</Typography>}
+            {deptEmployees.length === 0 && <Typography color="text.secondary" px={2}>No employees allocated.</Typography>}
           </List>
         </DialogContent>
         <DialogActions>

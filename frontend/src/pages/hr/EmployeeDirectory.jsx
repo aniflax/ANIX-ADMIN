@@ -58,8 +58,8 @@ function buildMonthOptions(cutoff = 20) {
 }
 
 // ─── Main Component ────────────────────────────────────────────────────────────
-export default function SevakDirectory() {
-  const [sevaks, setSevaks] = useState([]);
+export default function EmployeeDirectory() {
+  const [employees, setEmployees] = useState([]);
   const [departments, setDepartments] = useState([]);
   const [leaveTypes, setLeaveTypes] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -88,7 +88,7 @@ export default function SevakDirectory() {
   const [menuContext, setMenuContext] = useState('directory');
 
   // Delete-request confirm dialog
-  const [delReqDialog, setDelReqDialog] = useState({ open: false, sevak: null });
+  const [delReqDialog, setDelReqDialog] = useState({ open: false, employee: null });
 
   // Bulk Communication dialog
   const [bulkOpen, setBulkOpen] = useState(false);
@@ -99,11 +99,11 @@ export default function SevakDirectory() {
   const canSeeOnboarding = ['SUPER_ADMIN', 'ADMIN', 'HR'].includes(user?.role);
   const canBulkCommunicate = isHr || isAdmin;
   // Leave Balance Modification Dialog
-  const [leaveDialog, setLeaveDialog] = useState({ open: false, sevak: null });
+  const [leaveDialog, setLeaveDialog] = useState({ open: false, employee: null });
   const [editingBalances, setEditingBalances] = useState([]);
   const [saveLoading, setSaveLoading] = useState(false);
 
-  // Tab indices: 0=All Sevaks, 1=Onboardings (if allowed), 2=Inactive (if not HOD)
+  // Tab indices: 0=All Employees, 1=Onboardings (if allowed), 2=Inactive (if not HOD)
   // We compute the actual tab index mapping here:
   const onboardingTabIdx = canSeeOnboarding ? 1 : null;
 
@@ -111,10 +111,10 @@ export default function SevakDirectory() {
   const fetchData = useCallback(async () => {
     try {
       const [sevRes, deptRes] = await Promise.all([
-        api.get('/api/sevaks/'),
+        api.get('/api/employees/'),
         api.get('/api/departments/')
       ]);
-      setSevaks(sevRes.data);
+      setEmployees(sevRes.data);
       setDepartments(deptRes.data);
     } catch (error) {
       console.error('Failed to fetch directory data', error);
@@ -141,7 +141,7 @@ export default function SevakDirectory() {
         params.year = monthOpt.year;
         params.cutoff = cutoffDay;
       }
-      const res = await api.get('/api/sevaks/onboarding', { params });
+      const res = await api.get('/api/employees/onboarding', { params });
       setOnboardings(res.data);
       setSelectedOnboardings(new Set()); // clear selection on filter change
       setOnboardingSearch('');
@@ -191,10 +191,10 @@ export default function SevakDirectory() {
       && target.getMonth() === date.getMonth()
       && target.getDate() === date.getDate();
   };
-  const canModifyLeaveBalances = (sevak) => {
-    if (!sevak?.email_verified) return false;
+  const canModifyLeaveBalances = (employee) => {
+    if (!employee?.email_verified) return false;
     if (isAdmin) return true;
-    return isHr && !sevak.hr_leave_modified && isSameLocalDate(sevak.activated_at);
+    return isHr && !employee.hr_leave_modified && isSameLocalDate(employee.activated_at);
   };
 
   // 3 months ago cutoff for inactive accounts
@@ -209,16 +209,16 @@ export default function SevakDirectory() {
     const matchSearch = !search
       || s.first_name.toLowerCase().includes(searchLower)
       || s.last_name.toLowerCase().includes(searchLower)
-      || s.sevak_id.toString().includes(search)
+      || s.employee_id.toString().includes(search)
       || (s.email && s.email.toLowerCase().includes(searchLower));
     const matchRole = filterRole ? s.role === filterRole : true;
     const matchDept = filterDept ? s.department_id === filterDept.id : true;
     return matchSearch && matchRole && matchDept;
   });
 
-  const activeSevaks = applyFilters(sevaks.filter(s => s.status !== 'INACTIVE' ||
+  const activeEmployees = applyFilters(employees.filter(s => s.status !== 'INACTIVE' ||
     !s.updated_at || new Date(s.updated_at) > threeMonthsAgo));
-  const inactiveSevaks = applyFilters(sevaks.filter(s =>
+  const inactiveEmployees = applyFilters(employees.filter(s =>
     s.status === 'INACTIVE' && s.updated_at && new Date(s.updated_at) <= threeMonthsAgo
   ));
 
@@ -229,7 +229,7 @@ export default function SevakDirectory() {
     return (
       o.first_name?.toLowerCase().includes(q) ||
       o.last_name?.toLowerCase().includes(q) ||
-      String(o.sevak_id).includes(q) ||
+      String(o.employee_id).includes(q) ||
       o.email?.toLowerCase().includes(q)
     );
   });
@@ -239,20 +239,20 @@ export default function SevakDirectory() {
     let csv = 'data:text/csv;charset=utf-8,';
     csv += 'ID,First Name,Last Name,Email,Role,Status,Department\n';
     list.forEach(s => {
-      csv += [s.sevak_id, s.first_name, s.last_name, s.email || 'N/A', s.role, s.status, getDeptName(s.department_id)].join(',') + '\r\n';
+      csv += [s.employee_id, s.first_name, s.last_name, s.email || 'N/A', s.role, s.status, getDeptName(s.department_id)].join(',') + '\r\n';
     });
     const link = document.createElement('a');
     link.setAttribute('href', encodeURI(csv));
-    link.setAttribute('download', 'sevak_directory.csv');
+    link.setAttribute('download', 'employee_directory.csv');
     document.body.appendChild(link); link.click(); document.body.removeChild(link);
   };
 
-  const handleOpenLeaveDialog = async (sevak) => {
+  const handleOpenLeaveDialog = async (employee) => {
     closeMenu();
     try {
-      const res = await api.get(`/api/leave/balances/${sevak.id}`);
+      const res = await api.get(`/api/leave/balances/${employee.id}`);
       setEditingBalances(sortBalancesByLeaveType(Array.isArray(res.data) ? res.data : []));
-      setLeaveDialog({ open: true, sevak });
+      setLeaveDialog({ open: true, employee });
     } catch (err) {
       console.error('Failed to fetch leave balances', err);
       setMsg({ type: 'error', text: 'Failed to fetch leave balances' });
@@ -267,14 +267,14 @@ export default function SevakDirectory() {
     }
     setSaveLoading(true);
     try {
-      await api.put(`/api/leave/balances/${leaveDialog.sevak.id}`, {
+      await api.put(`/api/leave/balances/${leaveDialog.employee.id}`, {
         updates: editingBalances.map(b => ({
           leave_type_id: b.leave_type_id,
           new_allocated: b.total_allocated
         }))
       });
       setMsg({ type: 'success', text: 'Balances updated successfully' });
-      setLeaveDialog({ open: false, sevak: null });
+      setLeaveDialog({ open: false, employee: null });
       fetchOnboardings(selectedMonthOption); // Refresh
     } catch (err) {
       setMsg({ type: 'error', text: err.response?.data?.detail || 'Failed to update balances' });
@@ -289,12 +289,12 @@ export default function SevakDirectory() {
       : onboardings;
 
     let csv = 'data:text/csv;charset=utf-8,';
-    csv += 'Sevak ID,First Name,Last Name,Email,Email Verified,Status,Registered On,Activated On\n';
+    csv += 'Employee ID,First Name,Last Name,Email,Email Verified,Status,Registered On,Activated On\n';
     toExport.forEach(o => {
       const registeredOn = o.created_at ? formatDisplayDate(o.created_at, 'N/A') : '—';
       const activatedOn = o.email_verified && o.activated_at ? formatDisplayDate(o.activated_at, 'N/A') : '—';
       csv += [
-        o.sevak_id,
+        o.employee_id,
         o.first_name,
         o.last_name,
         o.email || 'N/A',
@@ -321,46 +321,46 @@ export default function SevakDirectory() {
   };
 
   // ─── Directory actions ─────────────────────────────────────────────────────
-  const openMenu = (e, sevak, context = 'directory') => {
+  const openMenu = (e, employee, context = 'directory') => {
     setAnchorEl(e.currentTarget);
-    setActiveRow(sevak);
+    setActiveRow(employee);
     setMenuContext(context);
   };
   const closeMenu = () => { setAnchorEl(null); setActiveRow(null); setMenuContext('directory'); };
 
-  const doDeactivate = async (sevak) => {
+  const doDeactivate = async (employee) => {
     closeMenu();
     try {
-      await api.put(`/api/sevaks/${sevak.id}/admin`, { status: 'INACTIVE' });
-      setMsg({ type: 'success', text: `${sevak.first_name} deactivated.` });
+      await api.put(`/api/employees/${employee.id}/admin`, { status: 'INACTIVE' });
+      setMsg({ type: 'success', text: `${employee.first_name} deactivated.` });
       fetchData();
     } catch (e) { setMsg({ type: 'error', text: e.response?.data?.detail || 'Failed.' }); }
   };
 
-  const doActivate = async (sevak) => {
+  const doActivate = async (employee) => {
     closeMenu();
     try {
-      await api.post(`/api/sevaks/${sevak.id}/activate`);
-      setMsg({ type: 'success', text: `${sevak.first_name} activated.` });
+      await api.post(`/api/employees/${employee.id}/activate`);
+      setMsg({ type: 'success', text: `${employee.first_name} activated.` });
       fetchData();
     } catch (e) { setMsg({ type: 'error', text: e.response?.data?.detail || 'Failed.' }); }
   };
 
   const doDeleteRequest = async () => {
-    const sevak = delReqDialog.sevak;
-    setDelReqDialog({ open: false, sevak: null });
+    const employee = delReqDialog.employee;
+    setDelReqDialog({ open: false, employee: null });
     try {
-      await api.post(`/api/sevaks/${sevak.id}/delete-request`);
-      setMsg({ type: 'success', text: `Delete request submitted for ${sevak.first_name} ${sevak.last_name}.` });
+      await api.post(`/api/employees/${employee.id}/delete-request`);
+      setMsg({ type: 'success', text: `Delete request submitted for ${employee.first_name} ${employee.last_name}.` });
       fetchData();
     } catch (e) { setMsg({ type: 'error', text: e.response?.data?.detail || 'Failed.' }); }
   };
 
-  const doWithdrawDeleteRequest = async (sevak) => {
+  const doWithdrawDeleteRequest = async (employee) => {
     closeMenu();
     try {
-      await api.delete(`/api/sevaks/${sevak.id}/delete-request`);
-      setMsg({ type: 'success', text: `Delete request withdrawn for ${sevak.first_name} ${sevak.last_name}.` });
+      await api.delete(`/api/employees/${employee.id}/delete-request`);
+      setMsg({ type: 'success', text: `Delete request withdrawn for ${employee.first_name} ${employee.last_name}.` });
       fetchData();
     } catch (e) { setMsg({ type: 'error', text: e.response?.data?.detail || 'Failed.' }); }
   };
@@ -383,7 +383,7 @@ export default function SevakDirectory() {
         <TableBody>
           {list.map(s => (
             <TableRow key={s.id} hover sx={{ bgcolor: s.delete_requested ? '#fff3e0' : 'inherit' }}>
-              <TableCell>{s.sevak_id}</TableCell>
+              <TableCell>{s.employee_id}</TableCell>
               <TableCell>
                 <Link
                   to={`/profile/${s.id}`}
@@ -428,7 +428,7 @@ export default function SevakDirectory() {
           {list.length === 0 && (
             <TableRow>
               <TableCell colSpan={7} align="center" sx={{ py: 4, color: 'text.secondary' }}>
-                {showInactiveWarning ? 'No inactive accounts older than 3 months.' : 'No Sevaks found.'}
+                {showInactiveWarning ? 'No inactive accounts older than 3 months.' : 'No Employees found.'}
               </TableCell>
             </TableRow>
           )}
@@ -463,7 +463,7 @@ export default function SevakDirectory() {
                   />
                 </Tooltip>
               </TableCell>
-              <TableCell><b>Sevak ID</b></TableCell>
+              <TableCell><b>Employee ID</b></TableCell>
               <TableCell><b>Name</b></TableCell>
               <TableCell><b>Email</b></TableCell>
               <TableCell><b>Registered On</b></TableCell>
@@ -494,7 +494,7 @@ export default function SevakDirectory() {
                       size="small"
                     />
                   </TableCell>
-                  <TableCell>{o.sevak_id}</TableCell>
+                  <TableCell>{o.employee_id}</TableCell>
                   <TableCell>
                     <b>{o.first_name} {o.last_name}</b>
                   </TableCell>
@@ -550,8 +550,8 @@ export default function SevakDirectory() {
 
   if (loading) return <Box sx={{ p: 4 }}><CircularProgress /></Box>;
 
-  const roles = ['HOD', 'SEVAK'];
-  const currentList = tabIdx === 0 ? activeSevaks : inactiveSevaks;
+  const roles = ['HOD', 'EMPLOYEE'];
+  const currentList = tabIdx === 0 ? activeEmployees : inactiveEmployees;
   const balanceValidationError = editingBalances.some(
     b => Number(b.total_allocated) < Number(b.used || 0) + Number(b.pending || 0)
   );
@@ -560,7 +560,7 @@ export default function SevakDirectory() {
     <Box>
       {/* Header */}
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: { xs: 'stretch', sm: 'center' }, mb: 3, gap: 2, flexDirection: { xs: 'column', sm: 'row' } }}>
-        <Typography variant="h5" fontWeight="bold">{isHod ? 'Department Directory' : 'Sevak Directory'}</Typography>
+        <Typography variant="h5" fontWeight="bold">{isHod ? 'Department Directory' : 'Employee Directory'}</Typography>
         <Box display="flex" gap={1.5} flexWrap="wrap" sx={{ '& .MuiButton-root': { flex: { xs: '1 1 100%', sm: '0 0 auto' } } }}>
           {tabIdx === onboardingTabIdx ? (
             <Button
@@ -586,7 +586,7 @@ export default function SevakDirectory() {
             </Button>
           )}
           {canSeeOnboarding && (
-            <Button variant="contained" component={Link} to="/onboarding">+ Add Sevak</Button>
+            <Button variant="contained" component={Link} to="/onboarding">+ Add Employee</Button>
           )}
         </Box>
       </Box>
@@ -602,16 +602,16 @@ export default function SevakDirectory() {
           allowScrollButtonsMobile
           sx={{ borderBottom: '1px solid', borderColor: 'divider' }}
         >
-          <Tab label={`All Sevaks (${activeSevaks.length})`} />
+          <Tab label={`All Employees (${activeEmployees.length})`} />
           {canSeeOnboarding && (
             <Tab label={`Onboardings (${filteredOnboardings.length})`} />
           )}
           {!isHod && (
-            <Tab label={`Inactive >3 Months (${inactiveSevaks.length})`} />
+            <Tab label={`Inactive >3 Months (${inactiveEmployees.length})`} />
           )}
         </Tabs>
 
-        {/* ── All Sevaks filters ── */}
+        {/* ── All Employees filters ── */}
         {tabIdx !== onboardingTabIdx && (
           <Box sx={{ p: 2, borderBottom: '1px solid', borderColor: 'divider', overflowX: 'auto' }}>
             <Grid container spacing={2} alignItems="center" wrap="nowrap" sx={{ minWidth: { xs: isHod ? 360 : 860, md: 0 } }}>
@@ -672,7 +672,7 @@ export default function SevakDirectory() {
         )}
 
         {/* ── Tab panels ── */}
-        <TabPanel value={tabIdx} index={0}>{renderTable(activeSevaks)}</TabPanel>
+        <TabPanel value={tabIdx} index={0}>{renderTable(activeEmployees)}</TabPanel>
 
         {canSeeOnboarding && (
           <TabPanel value={tabIdx} index={1}>
@@ -682,12 +682,12 @@ export default function SevakDirectory() {
 
         {!isHod && (
           <TabPanel value={tabIdx} index={canSeeOnboarding ? 2 : 1}>
-            {inactiveSevaks.length > 0 && (
+            {inactiveEmployees.length > 0 && (
               <Alert severity="warning" sx={{ m: 2 }}>
-                These {inactiveSevaks.length} account(s) have been inactive for more than 3 months and require action.
+                These {inactiveEmployees.length} account(s) have been inactive for more than 3 months and require action.
               </Alert>
             )}
-            {renderTable(inactiveSevaks, true)}
+            {renderTable(inactiveEmployees, true)}
           </TabPanel>
         )}
       </Paper>
@@ -704,7 +704,7 @@ export default function SevakDirectory() {
         </MuiMenuItem>
         <MuiMenuItem
           component={Link}
-          to={activeRow ? `/directory/${activeRow.id}/sevak-records` : '#'}
+          to={activeRow ? `/directory/${activeRow.id}/employee-records` : '#'}
           state={{ ...location.state, from: location.pathname, tab: 'leave' }}
           onClick={closeMenu}
         >
@@ -712,7 +712,7 @@ export default function SevakDirectory() {
         </MuiMenuItem>
         <MuiMenuItem
           component={Link}
-          to={activeRow ? `/directory/${activeRow.id}/sevak-records` : '#'}
+          to={activeRow ? `/directory/${activeRow.id}/employee-records` : '#'}
           state={{ ...location.state, from: location.pathname, tab: 'attendance' }}
           onClick={closeMenu}
         >
@@ -732,7 +732,7 @@ export default function SevakDirectory() {
               Activate Account
             </MuiMenuItem>
           ) : (
-            // HODs do not have the power to deactivate any sevak profile.
+            // HODs do not have the power to deactivate any employee profile.
             !isHod && (
               <MuiMenuItem onClick={() => doDeactivate(activeRow)}>
                 Deactivate
@@ -742,7 +742,7 @@ export default function SevakDirectory() {
         )}
         {menuContext === 'directory' && activeRow?.status === 'INACTIVE' && !activeRow?.delete_requested && (
           <MuiMenuItem
-            onClick={() => { closeMenu(); setDelReqDialog({ open: true, sevak: activeRow }); }}
+            onClick={() => { closeMenu(); setDelReqDialog({ open: true, employee: activeRow }); }}
             sx={{ color: 'error.main' }}
           >
             Delete Request
@@ -759,18 +759,18 @@ export default function SevakDirectory() {
       </Menu>
 
       {/* Delete Request confirm dialog */}
-      <Dialog open={delReqDialog.open} onClose={() => setDelReqDialog({ open: false, sevak: null })}>
+      <Dialog open={delReqDialog.open} onClose={() => setDelReqDialog({ open: false, employee: null })}>
         <DialogTitle>Submit Delete Request</DialogTitle>
         <DialogContent>
           <Typography>
-            Submit a deletion request for <strong>{delReqDialog.sevak?.first_name} {delReqDialog.sevak?.last_name}</strong>?
+            Submit a deletion request for <strong>{delReqDialog.employee?.first_name} {delReqDialog.employee?.last_name}</strong>?
           </Typography>
           <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
             This will flag the account for Admin/SuperAdmin review. The account will not be deleted immediately.
           </Typography>
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setDelReqDialog({ open: false, sevak: null })}>Cancel</Button>
+          <Button onClick={() => setDelReqDialog({ open: false, employee: null })}>Cancel</Button>
           <Button variant="contained" color="error" onClick={doDeleteRequest}>Submit Request</Button>
         </DialogActions>
       </Dialog>
@@ -787,7 +787,7 @@ export default function SevakDirectory() {
       {/* Leave Balance Edit Dialog */}
       <Dialog
         open={leaveDialog.open}
-        onClose={() => !saveLoading && setLeaveDialog({ open: false, sevak: null })}
+        onClose={() => !saveLoading && setLeaveDialog({ open: false, employee: null })}
         maxWidth="md"
         fullWidth
         PaperProps={{ sx: { m: { xs: 1.5, sm: 4 }, width: { xs: 'calc(100% - 24px)', sm: '100%' } } }}
@@ -795,7 +795,7 @@ export default function SevakDirectory() {
         <DialogTitle>Modify Leave Balances</DialogTitle>
         <DialogContent>
           <Typography variant="body2" color="text.secondary" mb={2}>
-            Updating balances for <strong>{leaveDialog.sevak?.first_name} {leaveDialog.sevak?.last_name}</strong>.
+            Updating balances for <strong>{leaveDialog.employee?.first_name} {leaveDialog.employee?.last_name}</strong>.
             {isHr && (
               <Typography variant="caption" display="block" color="warning.main">
                 HR can edit only once and only on the activation day. Admin and SuperAdmin can edit later if needed.
@@ -871,7 +871,7 @@ export default function SevakDirectory() {
           </TableContainer>
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setLeaveDialog({ open: false, sevak: null })} disabled={saveLoading}>Cancel</Button>
+          <Button onClick={() => setLeaveDialog({ open: false, employee: null })} disabled={saveLoading}>Cancel</Button>
           <Button variant="contained" onClick={handleSaveBalances} disabled={saveLoading || balanceValidationError || editingBalances.length === 0}>
             {saveLoading ? <CircularProgress size={24} /> : 'Save Changes'}
           </Button>

@@ -2,7 +2,7 @@ import React from 'react';
 import { render, screen } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import { vi } from 'vitest';
-import SevakDirectory from '../../../src/pages/hr/SevakDirectory.jsx';
+import EmployeeDirectory from '../../../src/pages/hr/EmployeeDirectory.jsx';
 
 let location = { pathname: '/directory', state: {} };
 
@@ -32,34 +32,34 @@ vi.mock('react-router-dom', async () => {
   };
 });
 
-describe('SevakDirectory', () => {
+describe('EmployeeDirectory', () => {
   beforeEach(() => {
     location = { pathname: '/directory', state: {} };
     apiGet.mockImplementation((url) => {
-      if (url === '/api/sevaks/') {
+      if (url === '/api/employees/') {
         return Promise.resolve({
           data: [
             {
-              id: 'sevak-1',
-              sevak_id: 10006,
+              id: 'employee-1',
+              employee_id: 10006,
               first_name: 'Teja',
               last_name: 'Krishna',
-              email: 'sevak@example.com',
+              email: 'employee@example.com',
               email_verified: true,
-              role: 'SEVAK',
+              role: 'EMPLOYEE',
               status: 'ACTIVE',
               department_id: 'dept-1',
               updated_at: null,
               delete_requested: false,
             },
             {
-              id: 'sevak-2',
-              sevak_id: 10007,
+              id: 'employee-2',
+              employee_id: 10007,
               first_name: 'Pending',
               last_name: 'User',
               email: 'pending@example.com',
               email_verified: false,
-              role: 'SEVAK',
+              role: 'EMPLOYEE',
               status: 'ACTIVE',
               department_id: 'dept-1',
               updated_at: null,
@@ -80,9 +80,9 @@ describe('SevakDirectory', () => {
   });
 
   it('renders verified and unverified email indicators in the directory', async () => {
-    render(<SevakDirectory />, { wrapper: MemoryRouter });
+    render(<EmployeeDirectory />, { wrapper: MemoryRouter });
 
-    expect(await screen.findByText(/Sevak Directory/i)).toBeInTheDocument();
+    expect(await screen.findByText(/Employee Directory/i)).toBeInTheDocument();
     expect(await screen.findByTitle('Email verified')).toBeInTheDocument();
     expect(await screen.findByTitle('Email not verified')).toBeInTheDocument();
   });

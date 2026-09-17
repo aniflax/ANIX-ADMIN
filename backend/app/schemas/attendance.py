@@ -9,7 +9,7 @@ class AttendanceMarkRequest(BaseModel):
     source: AttendanceSource = AttendanceSource.WEB
 
 class AttendanceManualUpdate(BaseModel):
-    sevak_id: str
+    employee_id: str
     date: date
     check_in_time: Optional[datetime] = None
     check_out_time: Optional[datetime] = None
@@ -18,7 +18,7 @@ class AttendanceManualUpdate(BaseModel):
 
 class AttendanceResponse(BaseModel):
     id: str
-    sevak_id: str
+    employee_id: str
     date: date
     check_in_time: Optional[datetime] = None
     check_out_time: Optional[datetime] = None

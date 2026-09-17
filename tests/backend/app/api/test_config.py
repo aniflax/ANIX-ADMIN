@@ -1,10 +1,10 @@
 from app.models.department import ConfigAccessLevel, SystemConfig
-from app.models.sevak import RoleEnum
+from app.models.employee import RoleEnum
 
 
-def test_mail_config_round_trip_and_test_email(api_client_factory, db_session, make_sevak, make_config, monkeypatch):
-    super_admin = make_sevak(
-        sevak_id=10000,
+def test_mail_config_round_trip_and_test_email(api_client_factory, db_session, make_employee, make_config, monkeypatch):
+    super_admin = make_employee(
+        employee_id=10000,
         email="superadmin@anix.local",
         email_verified=True,
         role=RoleEnum.SUPER_ADMIN,
@@ -88,15 +88,15 @@ def test_mail_config_round_trip_and_test_email(api_client_factory, db_session, m
     monkeypatch.setattr("app.api.config.send_test_email", lambda **kwargs: True)
     test_response = client.post(
         "/api/config/mail/test",
-        json={"recipient_email": "sevak@example.com", "subject": "Smoke test"},
+        json={"recipient_email": "employee@example.com", "subject": "Smoke test"},
     )
     assert test_response.status_code == 200
     assert test_response.json()["sender"] == "no-reply@anix-hrms.example"
 
 
-def test_config_list_hides_mail_transport_password(api_client_factory, make_sevak, make_config):
-    super_admin = make_sevak(
-        sevak_id=10000,
+def test_config_list_hides_mail_transport_password(api_client_factory, make_employee, make_config):
+    super_admin = make_employee(
+        employee_id=10000,
         email="superadmin@anix.local",
         email_verified=True,
         role=RoleEnum.SUPER_ADMIN,

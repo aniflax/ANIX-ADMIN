@@ -132,7 +132,7 @@ const buildAttendanceCalendarEntries = ({ year, month, todayIso, history, leaveR
       if (dateStr < activationDateStr) continue;
       entries[dateStr] = {
         id: `leave-${dateStr}`,
-        sevak_id: history[0]?.sevak_id || null,
+        employee_id: history[0]?.employee_id || null,
         date: dateStr,
         check_in_time: null,
         check_out_time: null,
@@ -153,7 +153,7 @@ const buildAttendanceCalendarEntries = ({ year, month, todayIso, history, leaveR
       if (dateStr < activationDateStr) continue;
       entries[dateStr] = {
         id: `week-off-${dateStr}`,
-        sevak_id: history[0]?.sevak_id || null,
+        employee_id: history[0]?.employee_id || null,
         date: dateStr,
         check_in_time: null,
         check_out_time: null,
@@ -172,7 +172,7 @@ const buildAttendanceCalendarEntries = ({ year, month, todayIso, history, leaveR
       }
       entries[dateStr] = {
         id: `absent-${dateStr}`,
-        sevak_id: history[0]?.sevak_id || null,
+        employee_id: history[0]?.employee_id || null,
         date: dateStr,
         check_in_time: null,
         check_out_time: null,
@@ -386,7 +386,7 @@ function RequestProgress({ request, skipHodStep = false }) {
   );
 }
 
-function SevakDetailsCard({ sevak, department }) {
+function EmployeeDetailsCard({ employee, department }) {
   const navigate = useNavigate();
 
   return (
@@ -395,16 +395,16 @@ function SevakDetailsCard({ sevak, department }) {
         <Box display="flex" justifyContent="space-between" alignItems="flex-start" gap={2} flexWrap="wrap">
           <Box sx={{ minWidth: 0 }}>
             <Typography variant="overline" sx={{ letterSpacing: '0.08em', color: 'text.secondary' }}>
-              Sevak Details
+              Employee Details
             </Typography>
             <Typography variant="h5" fontWeight={700} sx={{ mb: 2 }}>
-              {sevak.first_name} {sevak.last_name}
+              {employee.first_name} {employee.last_name}
             </Typography>
           </Box>
           <Button
             variant="contained"
             size="small"
-            onClick={() => navigate(`/profile/${sevak.id}`)}
+            onClick={() => navigate(`/profile/${employee.id}`)}
             sx={{ borderRadius: 2, textTransform: 'none', fontWeight: 600, mb: 2, width: { xs: '100%', sm: 'auto' } }}
           >
             View Profile
@@ -414,14 +414,14 @@ function SevakDetailsCard({ sevak, department }) {
         <Grid container spacing={2} alignItems="stretch">
           <Grid item xs={12} sm={4}>
             <Paper variant="outlined" sx={{ p: 2.25, borderRadius: 3, height: '100%', minHeight: 96, display: 'flex', flexDirection: 'column', justifyContent: 'center', minWidth: 0 }}>
-              <Typography variant="caption" color="text.secondary">Sevak ID</Typography>
-              <Typography variant="subtitle1" fontWeight={700} sx={{ overflowWrap: 'anywhere' }}>{sevak.sevak_id}</Typography>
+              <Typography variant="caption" color="text.secondary">Employee ID</Typography>
+              <Typography variant="subtitle1" fontWeight={700} sx={{ overflowWrap: 'anywhere' }}>{employee.employee_id}</Typography>
             </Paper>
           </Grid>
           <Grid item xs={12} sm={4}>
             <Paper variant="outlined" sx={{ p: 2.25, borderRadius: 3, height: '100%', minHeight: 96, display: 'flex', flexDirection: 'column', justifyContent: 'center', minWidth: 0 }}>
               <Typography variant="caption" color="text.secondary">Role</Typography>
-              <Typography variant="subtitle1" fontWeight={700} sx={{ overflowWrap: 'anywhere' }}>{String(sevak.role || '').replace('_', ' ')}</Typography>
+              <Typography variant="subtitle1" fontWeight={700} sx={{ overflowWrap: 'anywhere' }}>{String(employee.role || '').replace('_', ' ')}</Typography>
             </Paper>
           </Grid>
           <Grid item xs={12} sm={4}>
@@ -448,12 +448,12 @@ function SevakDetailsCard({ sevak, department }) {
   );
 }
 
-function AttendanceSummaryView({ sevak, leaveRequests, attendanceHistory, viewDate, setViewDate, canDownloadLogs }) {
+function AttendanceSummaryView({ employee, leaveRequests, attendanceHistory, viewDate, setViewDate, canDownloadLogs }) {
   const today = new Date();
   const todayIso = getLocalIsoDate(today);
   const monthLabel = `${MONTHS[viewDate.getMonth()]} ${viewDate.getFullYear()}`;
   const isMobile = useMediaQuery((theme) => theme.breakpoints.down('lg'));
-  const activationDateStr = getIsoDate(sevak.activated_at);
+  const activationDateStr = getIsoDate(employee.activated_at);
 
   const derivedHistory = useMemo(() => buildAttendanceCalendarEntries({
     year: viewDate.getFullYear(),
@@ -461,10 +461,10 @@ function AttendanceSummaryView({ sevak, leaveRequests, attendanceHistory, viewDa
     todayIso,
     history: attendanceHistory,
     leaveRequests,
-    defaultWeekOff: sevak.default_week_off || 'Sunday',
-    weekOffHistory: sevak.week_off_history || [],
-    activatedAt: sevak.activated_at,
-  }), [attendanceHistory, leaveRequests, sevak.default_week_off, sevak.week_off_history, sevak.activated_at, todayIso, viewDate]);
+    defaultWeekOff: employee.default_week_off || 'Sunday',
+    weekOffHistory: employee.week_off_history || [],
+    activatedAt: employee.activated_at,
+  }), [attendanceHistory, leaveRequests, employee.default_week_off, employee.week_off_history, employee.activated_at, todayIso, viewDate]);
 
   const derivedHistoryMap = useMemo(() => {
     const map = {};
@@ -506,7 +506,7 @@ function AttendanceSummaryView({ sevak, leaveRequests, attendanceHistory, viewDa
     const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
     const link = document.createElement('a');
     link.href = URL.createObjectURL(blob);
-    link.download = `attendance_log_${sevak.sevak_id || sevak.id}_${MONTHS[month]}_${year}.csv`;
+    link.download = `attendance_log_${employee.employee_id || employee.id}_${MONTHS[month]}_${year}.csv`;
     link.click();
     URL.revokeObjectURL(link.href);
   };
@@ -911,7 +911,7 @@ function AttendanceSummaryView({ sevak, leaveRequests, attendanceHistory, viewDa
   );
 }
 
-function LeaveSummaryView({ sevak, requests, viewDate, setViewDate }) {
+function LeaveSummaryView({ employee, requests, viewDate, setViewDate }) {
   const { user } = useAuth();
   const navigate = useNavigate();
   const year = viewDate.getFullYear();
@@ -960,7 +960,7 @@ function LeaveSummaryView({ sevak, requests, viewDate, setViewDate }) {
     navigate(targetPath, {
       state: {
         tab: isPending ? 'pending' : 'all',
-        sevakId: sevak?.id,
+        employeeId: employee?.id,
         highlightRequestId: req.id,
         category: !isPending ? req.leave_type_name : undefined,
       },
@@ -974,8 +974,8 @@ function LeaveSummaryView({ sevak, requests, viewDate, setViewDate }) {
           requests={requests}
           viewDate={viewDate}
           setViewDate={setViewDate}
-          defaultWeekOff={sevak?.default_week_off || 'Sunday'}
-          weekOffHistory={sevak?.week_off_history || []}
+          defaultWeekOff={employee?.default_week_off || 'Sunday'}
+          weekOffHistory={employee?.week_off_history || []}
           onCellClick={handleCellClick}
           renderLabel={(req) => req.leave_type_name}
           showLegend
@@ -1049,7 +1049,7 @@ function LeaveSummaryView({ sevak, requests, viewDate, setViewDate }) {
   );
 }
 
-export default function SevakDirectoryRecordView() {
+export default function EmployeeDirectoryRecordView() {
   const { id } = useParams();
   const navigate = useNavigate();
   const location = useLocation();
@@ -1060,7 +1060,7 @@ export default function SevakDirectoryRecordView() {
   });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  const [sevak, setSevak] = useState(null);
+  const [employee, setEmployee] = useState(null);
   const [department, setDepartment] = useState(null);
   const [leaveRequests, setLeaveRequests] = useState([]);
   const [attendanceHistory, setAttendanceHistory] = useState([]);
@@ -1080,24 +1080,24 @@ export default function SevakDirectoryRecordView() {
     setError('');
     try {
       const [profileRes, leavesRes, attendanceRes] = await Promise.all([
-        api.get(`/api/sevaks/${id}`),
+        api.get(`/api/employees/${id}`),
         api.get('/api/leave/requests'),
-        api.get(`/api/attendance/history/sevak/${id}`)
+        api.get(`/api/attendance/history/employee/${id}`)
       ]);
 
-      const targetSevak = profileRes.data;
-      setSevak(targetSevak);
-      setLeaveRequests(leavesRes.data.filter((request) => request.sevak_id === id));
+      const targetEmployee = profileRes.data;
+      setEmployee(targetEmployee);
+      setLeaveRequests(leavesRes.data.filter((request) => request.employee_id === id));
       setAttendanceHistory(attendanceRes.data);
 
-      if (targetSevak.department_id) {
-        const departmentRes = await api.get(`/api/departments/${targetSevak.department_id}`);
+      if (targetEmployee.department_id) {
+        const departmentRes = await api.get(`/api/departments/${targetEmployee.department_id}`);
         setDepartment(departmentRes.data);
       } else {
         setDepartment(null);
       }
     } catch (fetchError) {
-      setError(fetchError.response?.data?.detail || 'Failed to load sevak records.');
+      setError(fetchError.response?.data?.detail || 'Failed to load employee records.');
     } finally {
       setLoading(false);
     }
@@ -1109,7 +1109,7 @@ export default function SevakDirectoryRecordView() {
 
   useEffect(() => {
     const disconnectAttendanceStream = connectAttendanceStream((event) => {
-      const targetId = event?.sevak_id;
+      const targetId = event?.employee_id;
       if (!targetId || targetId === id) {
         fetchData();
       }
@@ -1142,11 +1142,11 @@ export default function SevakDirectoryRecordView() {
     return <Box sx={{ p: 4 }}><CircularProgress /></Box>;
   }
 
-  if (!sevak) {
-    return <Alert severity="error">{error || 'Unable to load sevak.'}</Alert>;
+  if (!employee) {
+    return <Alert severity="error">{error || 'Unable to load employee.'}</Alert>;
   }
 
-  const title = "Sevak Records";
+  const title = "Employee Records";
   const canDownloadAttendanceLogs = ATTENDANCE_LOG_DOWNLOAD_ROLES.includes(user?.role);
 
   return (
@@ -1165,7 +1165,7 @@ export default function SevakDirectoryRecordView() {
       {error && <Alert severity="error" sx={{ mb: 3 }}>{error}</Alert>}
 
       <Box sx={{ mb: 4 }}>
-        <SevakDetailsCard sevak={sevak} department={department} />
+        <EmployeeDetailsCard employee={employee} department={department} />
       </Box>
 
       <Paper sx={{ borderRadius: 4, overflow: 'hidden', boxShadow: '0 4px 20px 0 rgba(0,0,0,0.05)' }}>
@@ -1186,7 +1186,7 @@ export default function SevakDirectoryRecordView() {
         <Box sx={{ p: { xs: 2, md: 4 }, minHeight: 400 }}>
           {activeTab === 0 ? (
             <AttendanceSummaryView
-              sevak={sevak}
+              employee={employee}
               leaveRequests={leaveRequests}
               attendanceHistory={attendanceHistory}
               viewDate={viewDate}
@@ -1195,7 +1195,7 @@ export default function SevakDirectoryRecordView() {
             />
           ) : (
             <LeaveSummaryView
-              sevak={sevak}
+              employee={employee}
               requests={leaveRequests}
               viewDate={viewDate}
               setViewDate={setViewDate}

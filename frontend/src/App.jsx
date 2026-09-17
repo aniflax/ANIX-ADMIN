@@ -6,13 +6,13 @@ import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
 import ProtectedRoute from './components/ProtectedRoute';
 import MainLayout from './components/layout/MainLayout';
-import SevakDirectory from './pages/hr/SevakDirectory';
-import Profile from './pages/sevak/Profile';
-import ApplyLeave from './pages/sevak/ApplyLeave';
-import Leaves from './pages/sevak/Leaves';
+import EmployeeDirectory from './pages/hr/EmployeeDirectory';
+import Profile from './pages/employee/Profile';
+import ApplyLeave from './pages/employee/ApplyLeave';
+import Leaves from './pages/employee/Leaves';
 import PendingApprovals from './pages/hod/PendingApprovals';
 import LeaveAdmin from './pages/hr/LeaveAdmin';
-import Attendance from './pages/sevak/Attendance';
+import Attendance from './pages/employee/Attendance';
 import AttendanceReports from './pages/hr/AttendanceReports';
 import Onboarding from './pages/auth/Onboarding';
 import Docs from './pages/auth/Docs';
@@ -23,7 +23,7 @@ import Locations from './pages/hr/Locations';
 import AccountManagement from './pages/admin/AccountManagement';
 import Settings from './pages/superadmin/Settings';
 import AttendanceReport from './pages/hr/AttendanceReport';
-import SevakDirectoryRecordView from './pages/hr/SevakDirectoryRecordView';
+import EmployeeDirectoryRecordView from './pages/hr/EmployeeDirectoryRecordView';
 
 const theme = createTheme({
   palette: {
@@ -165,29 +165,29 @@ function App() {
               <Route index element={<Dashboard />} />
               <Route path="directory" element={
                 <ProtectedRoute allowedRoles={['SUPER_ADMIN', 'ADMIN', 'HR', 'HOD']}>
-                  <SevakDirectory />
+                  <EmployeeDirectory />
                 </ProtectedRoute>
               } />
-              <Route path="directory/:id/sevak-records" element={
+              <Route path="directory/:id/employee-records" element={
                 <ProtectedRoute allowedRoles={['SUPER_ADMIN', 'ADMIN', 'HR', 'HOD']}>
-                  <SevakDirectoryRecordView />
+                  <EmployeeDirectoryRecordView />
                 </ProtectedRoute>
               } />
               {/* Backward compatibility redirects — ensuring these don't break based on path nesting */}
-              <Route path="directory/:id/leave-summary" element={<Navigate to={`../sevak-records`} replace />} />
-              <Route path="directory/:id/attendance-log" element={<Navigate to={`../sevak-records`} replace />} />
+              <Route path="directory/:id/leave-summary" element={<Navigate to={`../employee-records`} replace />} />
+              <Route path="directory/:id/attendance-log" element={<Navigate to={`../employee-records`} replace />} />
               <Route path="profile" element={<Profile />} />
               <Route path="profile/:id" element={<Profile />} />
 
-              {/* Leaves – consolidated tab page for all sevaks */}
+              {/* Leaves – consolidated tab page for all employees */}
               <Route path="leaves" element={
-                <ProtectedRoute allowedRoles={['SEVAK', 'HOD']}>
+                <ProtectedRoute allowedRoles={['EMPLOYEE', 'HOD']}>
                   <Leaves />
                 </ProtectedRoute>
               } />
               {/* Legacy direct apply route kept for backward compat */}
               <Route path="leave/apply" element={
-                <ProtectedRoute allowedRoles={['SEVAK', 'HOD']}>
+                <ProtectedRoute allowedRoles={['EMPLOYEE', 'HOD']}>
                   <ApplyLeave />
                 </ProtectedRoute>
               } />
@@ -221,7 +221,7 @@ function App() {
               } />
 
               <Route path="attendance" element={
-                <ProtectedRoute allowedRoles={['SEVAK', 'HOD']}>
+                <ProtectedRoute allowedRoles={['EMPLOYEE', 'HOD']}>
                   <Attendance />
                 </ProtectedRoute>
               } />

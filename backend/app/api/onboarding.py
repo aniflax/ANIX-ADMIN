@@ -1,6 +1,6 @@
 from fastapi import APIRouter, UploadFile, File, Form, Request, status
 from app.core.dependencies import DbSession
-from app.models.sevak import Sevak, RoleEnum, SevakStatusEnum
+from app.models.employee import Employee, RoleEnum, EmployeeStatusEnum
 from app.core.security import hash_password
 from app.services.email_identity import ensure_email_available
 from app.services.notifications import send_account_activation_email
@@ -24,20 +24,20 @@ def _get_request_frontend_url(request: Request) -> str | None:
     return None
 
 
-def _get_next_pending_sevak_id(db: DbSession) -> int:
+def _get_next_pending_employee_id(db: DbSession) -> int:
     lowest_pending = (
-        db.query(Sevak)
-        .filter(Sevak.sevak_id <= 0)
-        .order_by(Sevak.sevak_id.asc())
+        db.query(Employee)
+        .filter(Employee.employee_id <= 0)
+        .order_by(Employee.employee_id.asc())
         .first()
     )
     if not lowest_pending:
         return -1
-    return lowest_pending.sevak_id - 1
+    return lowest_pending.employee_id - 1
 
 
 @router.post("/register")
-async def register_sevak(
+async def register_employee(
     request: Request,
     db: DbSession,
     first_name: str = Form(...),
@@ -53,14 +53,14 @@ async def register_sevak(
     normalized_email = ensure_email_available(db, email)
 
     uid = str(uuid.uuid4())
-    id_proof_object = await save_document_upload(id_proof, sevak_id=uid, doc_type="id_proof")
-    pan_card_object = await save_document_upload(pan_card, sevak_id=uid, doc_type="pan_card")
-    passbook_object = await save_document_upload(passbook, sevak_id=uid, doc_type="passbook")
+    id_proof_object = await save_document_upload(id_proof, employee_id=uid, doc_type="id_proof")
+    pan_card_object = await save_document_upload(pan_card, employee_id=uid, doc_type="pan_card")
+    passbook_object = await save_document_upload(passbook, employee_id=uid, doc_type="passbook")
 
-    # Create sevak with pending status - ID will be allocated after email verification
-    new_sevak = Sevak(
+    # Create employee with pending status - ID will be allocated after email verification
+    new_employee = Employee(
         id=uid,
-        sevak_id=_get_next_pending_sevak_id(db),  # Temporary placeholder; real ID is allocated after verification
+        employee_id=_get_next_pending_employee_id(db),  # Temporary placeholder; real ID is allocated after verification
         first_name=first_name,
         last_name=last_name,
         email=normalized_email,
@@ -71,20 +71,20 @@ async def register_sevak(
         id_proof_path=id_proof_object.key,
         pan_card_path=pan_card_object.key,
         passbook_path=passbook_object.key,
-        role=RoleEnum.SEVAK,
-        status=SevakStatusEnum.INACTIVE  # Account inactive until email verified
+        role=RoleEnum.EMPLOYEE,
+        status=EmployeeStatusEnum.INACTIVE  # Account inactive until email verified
     )
 
-    db.add(new_sevak)
+    db.add(new_employee)
     db.commit()
-    db.refresh(new_sevak)
+    db.refresh(new_employee)
     send_account_activation_email(
         db=db,
-        sevak=new_sevak,
+        employee=new_employee,
         requested_by_name="Onboarding",
         frontend_url=_get_request_frontend_url(request),
     )
 
     return {
-        "message": "Registration submitted! Please check your email and click the activation link to activate your account and receive your Sevak ID.",
+        "message": "Registration submitted! Please check your email and click the activation link to activate your account and receive your Employee ID.",
     }

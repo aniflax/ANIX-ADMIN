@@ -11,11 +11,11 @@
 ## Overview
 
 **anix HRMS** is a web-based Human Resource Management System purpose-built for anix
-(an organization of sevaks — selfless service workers). It digitizes the complete
-employee lifecycle, from onboarding a new sevak to tracking daily attendance,
-managing leave, and scaling sevaks up to Ashramites.
+(an organization of employees — selfless service workers). It digitizes the complete
+employee lifecycle, from onboarding a new employee to tracking daily attendance,
+managing leave, and scaling employees up to Ashramites.
 
-The system provides role-based dashboards for sevaks, HODs, HR admins, and
+The system provides role-based dashboards for employees, HODs, HR admins, and
 super admins, with geo-verified attendance, configurable leave policies,
 week-off management, and secure document storage.
 
@@ -23,27 +23,27 @@ week-off management, and secure document storage.
 
 - **Geo-verified check-in / check-out** — attendance is tied to registered
   office locations with a configurable proximity threshold.
-- **Multi-step leave approval** — sevak → HOD → HR with half-day support,
+- **Multi-step leave approval** — employee → HOD → HR with half-day support,
   cancellation, and full audit trail.
-- **Self-service onboarding** — new sevaks register, upload documents, and get
+- **Self-service onboarding** — new employees register, upload documents, and get
   activated via email links.
 - **Cloud document vault** — ID proof, PAN card, bank passbook uploaded to
   Cloudflare R2, not the database.
 - **Email-first communication** — Brevo (or SMTP) powers verification, password
   resets, leave notifications and reminders.
-- **Attendance reminders** — an in-app background worker nudges sevaks who
+- **Attendance reminders** — an in-app background worker nudges employees who
   haven't marked attendance.
 
 ---
 
 ## Features
 
-### Onboarding & Sevak Management
+### Onboarding & Employee Management
 - Self-registration with document upload (ID proof, PAN, passbook)
 - Email verification and activation links
 - Admin account management — lock/unlock, role assignment, activation
 - "Delete request" workflow with admin resolution
-- Seamless promotion path from Sevak → Ashramite
+- Seamless promotion path from Employee → Ashramite
 
 ### Attendance
 - Web-based check-in / check-out with GPS coordinate capture
@@ -60,13 +60,13 @@ week-off management, and secure document storage.
 - Calendar and request-history views
 
 ### Communications
-- Official announcements to sevaks or groups
+- Official announcements to employees or groups
 - Leave notification reminders with retry tracking
 - Onboarding / policy / news updates
 
 ### Administration
 - **Super Admin**: locations, system config, global settings
-- **HR Admin**: departments, sevak directory, attendance reports, leave admin
+- **HR Admin**: departments, employee directory, attendance reports, leave admin
 - **HOD**: department oversight, pending approvals
 - Role-based dashboards and Excel report exports
 
@@ -78,9 +78,9 @@ week-off management, and secure document storage.
 | --- | --- |
 | `SUPER_ADMIN` | Full system control: locations, settings, config |
 | `ADMIN` | System administration and user management |
-| `HR` | Departments, sevak records, attendance & leave administration |
+| `HR` | Departments, employee records, attendance & leave administration |
 | `HOD` | Head of Department — approval and department views |
-| `SEVAK` | Personal attendance, leave requests, profile management |
+| `EMPLOYEE` | Personal attendance, leave requests, profile management |
 
 ---
 
@@ -105,7 +105,7 @@ anix-hrms/
 ├── backend/
 │   ├── alembic/                 # Database migrations
 │   ├── app/
-│   │   ├── api/                 # Route handlers (auth, sevak, leave, attendance…)
+│   │   ├── api/                 # Route handlers (auth, employee, leave, attendance…)
 │   │   ├── core/                # Config, DB, security, seeding
 │   │   ├── models/              # SQLAlchemy models
 │   │   ├── schemas/             # Pydantic request/response schemas

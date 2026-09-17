@@ -43,7 +43,7 @@ export default function Profile() {
     const fetchProfile = async () => {
       try {
         const [profRes, deptRes] = await Promise.all([
-          api.get(`/api/sevaks/${targetId}`),
+          api.get(`/api/employees/${targetId}`),
           api.get('/api/departments/')
         ]);
         setProfileData(profRes.data);
@@ -71,10 +71,10 @@ export default function Profile() {
   const handleSave = async () => {
     setError(''); setSuccess('');
     try {
-      await api.put(`/api/sevaks/${targetId}`, formData);
+      await api.put(`/api/employees/${targetId}`, formData);
       setSuccess("Profile updated successfully!");
       setIsEditing(false);
-      const res = await api.get(`/api/sevaks/${targetId}`);
+      const res = await api.get(`/api/employees/${targetId}`);
       setProfileData(res.data);
     } catch (err) {
       setError("Failed to update profile. " + (err.response?.data?.detail || ""));
@@ -85,7 +85,7 @@ export default function Profile() {
     setVerificationMessage('');
     setVerificationSending(true);
     try {
-      const res = await api.post(`/api/sevaks/${targetId}/resend-activation-email`);
+      const res = await api.post(`/api/employees/${targetId}/resend-activation-email`);
       setVerificationMessage(res.data.message || 'Activation email sent.');
     } catch (err) {
       setVerificationMessage(err.response?.data?.detail || 'Failed to send activation email.');
@@ -101,7 +101,7 @@ export default function Profile() {
     uploadForm.append('file', file);
     try {
       // Explicitly unset Content-Type so browser sets multipart/form-data with boundary
-      const res = await api.post(`/api/sevaks/${targetId}/documents`, uploadForm, {
+      const res = await api.post(`/api/employees/${targetId}/documents`, uploadForm, {
         headers: { 'Content-Type': undefined },
       });
       setSuccess(`${docType.replace('_', ' ')} uploaded successfully!`);
@@ -131,7 +131,7 @@ export default function Profile() {
       const nextUrls = {};
       await Promise.all(docs.map(async (doc) => {
         try {
-          const res = await api.get(`/api/sevaks/${profileData.id}/documents/${doc.key}`, {
+          const res = await api.get(`/api/employees/${profileData.id}/documents/${doc.key}`, {
             responseType: 'blob',
           });
           if (cancelled) return;
@@ -162,7 +162,7 @@ export default function Profile() {
       return;
     }
     try {
-      const res = await api.get(`/api/sevaks/${targetId}/documents/${docType}`, {
+      const res = await api.get(`/api/employees/${targetId}/documents/${docType}`, {
         responseType: 'blob',
       });
       const url = URL.createObjectURL(res.data);
@@ -176,7 +176,7 @@ export default function Profile() {
   const handleSystemReset = async () => {
     try {
       setLoading(true);
-      await api.delete('/api/sevaks/admin/system/clean');
+      await api.delete('/api/employees/admin/system/clean');
       setOpenResetDialog(false);
       setSuccess("System cleaned up! All non-admin data has been wiped.");
     } catch (err) {
@@ -213,7 +213,7 @@ export default function Profile() {
     <Box maxWidth="lg" sx={{ width: '100%', mx: 'auto' }}>
       <Box display="flex" justifyContent="space-between" alignItems={{ xs: 'stretch', sm: 'center' }} mb={3} gap={2} flexDirection={{ xs: 'column', sm: 'row' }}>
         <Typography variant="h4" fontWeight="bold" sx={{ fontSize: { xs: '1.75rem', sm: '2.125rem' } }}>
-          {user?.id === targetId ? 'My Profile' : 'Sevak Profile'}
+          {user?.id === targetId ? 'My Profile' : 'Employee Profile'}
         </Typography>
         <Box display="flex" gap={1.5} flexWrap="wrap" sx={{ '& .MuiButton-root': { flex: { xs: '1 1 100%', sm: '0 0 auto' } } }}>
           <Button
@@ -258,7 +258,7 @@ export default function Profile() {
 	                    }}
 	                  >
 	                    {[
-	                      ['Account ID', profileData.sevak_id],
+	                      ['Account ID', profileData.employee_id],
 	                      ['Role', profileData.role?.replace('_', ' ') || 'N/A'],
 	                      ['First Name', profileData.first_name],
 	                      ['Last Name', profileData.last_name],
@@ -296,7 +296,7 @@ export default function Profile() {
 	                      alignItems: 'start',
 	                    }}
 	                  >
-	                    <TextField label="Account ID" fullWidth size="small" variant="outlined" value={profileData.sevak_id} disabled />
+	                    <TextField label="Account ID" fullWidth size="small" variant="outlined" value={profileData.employee_id} disabled />
 	                    <TextField label="Role" fullWidth size="small" variant="outlined" value={profileData.role?.replace('_', ' ') || 'N/A'} disabled />
 	                    <TextField label="First Name" fullWidth size="small" variant="outlined" value={formData.first_name} onChange={(e) => setFormData({ ...formData, first_name: e.target.value.replace(/[^A-Za-z ]/g, '') })} />
 	                    <TextField label="Last Name" fullWidth size="small" variant="outlined" value={formData.last_name} onChange={(e) => setFormData({ ...formData, last_name: e.target.value.replace(/[^A-Za-z ]/g, '') })} />
@@ -326,11 +326,11 @@ export default function Profile() {
             <Grid container spacing={3}>
               <Grid item xs={12} sm={6} sx={isEditing ? { width: { xs: "40%", md: "20%" } } : workViewItemSx('14%')}>
                 {isEditing && ['HR', 'ADMIN', 'SUPER_ADMIN'].includes(user?.role) ? (
-                  <TextField label="Sevak ID" fullWidth size="small" variant="outlined" value={profileData.sevak_id} disabled />
+                  <TextField label="Employee ID" fullWidth size="small" variant="outlined" value={profileData.employee_id} disabled />
                 ) : (
                   <Box sx={{ p: { xs: 1.5, sm: 0 }, borderRadius: 2, bgcolor: { xs: 'rgba(244,124,32,0.04)', sm: 'transparent' } }}>
-                    <Typography variant="caption" color="text.secondary" fontWeight={600} sx={{ textTransform: 'uppercase' }}>Sevak ID</Typography>
-                    <Typography variant="body1" fontWeight={500}>{profileData.sevak_id}</Typography>
+                    <Typography variant="caption" color="text.secondary" fontWeight={600} sx={{ textTransform: 'uppercase' }}>Employee ID</Typography>
+                    <Typography variant="body1" fontWeight={500}>{profileData.employee_id}</Typography>
                   </Box>
                 )}
               </Grid>
@@ -607,7 +607,7 @@ export default function Profile() {
           <Paper sx={{ p: 4, border: '1px solid red' }}>
             <Typography variant="h5" color="error" fontWeight="bold" mb={2}>Danger Zone</Typography>
             <Typography variant="body1" mb={3}>
-              Perform a full system reset. This action deletes all non-admin Sevak data.
+              Perform a full system reset. This action deletes all non-admin Employee data.
             </Typography>
             <Button variant="contained" color="error" onClick={() => setOpenResetDialog(true)}>Reset System Data</Button>
           </Paper>

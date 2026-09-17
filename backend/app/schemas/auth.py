@@ -1,12 +1,12 @@
 from pydantic import BaseModel
 from typing import Optional
 from datetime import datetime
-from app.models.sevak import RoleEnum
+from app.models.employee import RoleEnum
 
 
 class LoginRequest(BaseModel):
-    identifier: Optional[str] = None  # Sevak ID (numeric) or Email address
-    sevak_id: Optional[int] = None
+    identifier: Optional[str] = None  # Employee ID (numeric) or Email address
+    employee_id: Optional[int] = None
     password: str
 
 
@@ -14,7 +14,7 @@ class TokenResponse(BaseModel):
     access_token: str
     token_type: str = "bearer"
     role: RoleEnum
-    sevak_id: int
+    employee_id: int
     full_name: str
 
 
@@ -32,39 +32,39 @@ class PasswordChangeRequest(BaseModel):
 
 
 class PasswordResetRequest(BaseModel):
-    sevak_id: int
+    employee_id: int
     new_password: str
 
 
 class PasswordResetConfirm(BaseModel):
     token: str
-    sevak_id: str
+    employee_id: str
     new_password: str
 
 
 class PasswordResetValidate(BaseModel):
     token: str
-    sevak_id: str
+    employee_id: str
 
 
 class AccountActivationConfirm(BaseModel):
     token: str
-    sevak_id: str
+    employee_id: str
 
 
 class AccountActivationValidate(BaseModel):
     token: str
-    sevak_id: str
+    employee_id: str
 
 
 class EmailVerificationConfirm(BaseModel):
     token: str
-    sevak_id: str
+    employee_id: str
 
 
-class CurrentSevakResponse(BaseModel):
+class CurrentEmployeeResponse(BaseModel):
     id: str
-    sevak_id: int
+    employee_id: int
     first_name: str
     last_name: str
     full_name: str

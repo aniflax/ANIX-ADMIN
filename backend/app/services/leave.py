@@ -4,7 +4,7 @@ from fastapi import HTTPException, status
 from typing import List
 from datetime import datetime, date, timedelta
 from app.models.leave import LeaveType, LeaveBalance, LeaveRequest, LeaveRequestStatus
-from app.models.sevak import Sevak, RoleEnum, SevakStatusEnum
+from app.models.employee import Employee, RoleEnum, EmployeeStatusEnum
 from app.core.security import verify_password
 from app.schemas.leave import LeaveTypeCreate, LeaveTypeUpdate, LeaveRequestCreate
 from app.services.attendance import get_local_now
@@ -51,12 +51,12 @@ def _week_sunday(d: date) -> date:
     return d - timedelta(days=dow_sun)
 
 
-def _effective_leave_days(db: Session, sevak: Sevak, start_date: date, end_date: date) -> int:
+def _effective_leave_days(db: Session, employee: Employee, start_date: date, end_date: date) -> int:
     week_off_dates = {
         start_date + timedelta(days=offset)
         for offset in range((end_date - start_date).days + 1)
         if _sun_based_weekday(start_date + timedelta(days=offset)) == _DAY_NAME_TO_NUM.get(
-            get_effective_week_off_day(db, sevak.id, start_date + timedelta(days=offset), sevak.default_week_off),
+            get_effective_week_off_day(db, employee.id, start_date + timedelta(days=offset), employee.default_week_off),
             0,
         )
     }
@@ -64,7 +64,7 @@ def _effective_leave_days(db: Session, sevak: Sevak, start_date: date, end_date:
     week_off_type = db.query(LeaveType).filter(LeaveType.name == WEEK_OFF_TYPE_NAME).first()
     if week_off_type:
         swaps = db.query(LeaveRequest).filter(
-            LeaveRequest.sevak_id == sevak.id,
+            LeaveRequest.employee_id == employee.id,
             LeaveRequest.leave_type_id == week_off_type.id,
             LeaveRequest.status.in_([
                 LeaveRequestStatus.PENDING,
@@ -75,7 +75,7 @@ def _effective_leave_days(db: Session, sevak: Sevak, start_date: date, end_date:
             LeaveRequest.end_date >= start_date,
         ).all()
         for swap in swaps:
-            week_off_dates.discard(_target_default_for_swap(swap.start_date, sevak.default_week_off))
+            week_off_dates.discard(_target_default_for_swap(swap.start_date, employee.default_week_off))
             week_off_dates.add(swap.start_date)
 
     total_days = (end_date - start_date).days + 1
@@ -105,16 +105,16 @@ def _get_or_create_week_off_type(db: Session) -> LeaveType:
     return week_off_type
 
 
-def get_week_off_usage(db: Session, sevak_id: str, target_date: date) -> tuple[int, int]:
+def get_week_off_usage(db: Session, employee_id: str, target_date: date) -> tuple[int, int]:
     """Return approved and pending week-off usage for the swap cycle ending on target_date."""
     week_off_type = _get_or_create_week_off_type(db)
 
-    sevak = db.query(Sevak).filter(Sevak.id == sevak_id).first()
-    if not sevak:
+    employee = db.query(Employee).filter(Employee.id == employee_id).first()
+    if not employee:
         return 0, 0
 
     requests = db.query(LeaveRequest).filter(
-        LeaveRequest.sevak_id == sevak_id,
+        LeaveRequest.employee_id == employee_id,
         LeaveRequest.leave_type_id == week_off_type.id,
         LeaveRequest.status.in_([
             LeaveRequestStatus.PENDING,
@@ -126,7 +126,7 @@ def get_week_off_usage(db: Session, sevak_id: str, target_date: date) -> tuple[i
     approved = 0
     pending = 0
     for req in requests:
-        if _target_default_for_swap(req.start_date, sevak.default_week_off) != target_date:
+        if _target_default_for_swap(req.start_date, employee.default_week_off) != target_date:
             continue
         if req.status == LeaveRequestStatus.APPROVED:
             approved += 1
@@ -142,7 +142,7 @@ def get_leave_types(db: Session, active_only: bool = True) -> List[LeaveType]:
     query = query.filter(LeaveType.name != WEEK_OFF_TYPE_NAME)
     return query.all()
 
-def create_leave_type(db: Session, leave_data: LeaveTypeCreate, current_user: Sevak) -> LeaveType:
+def create_leave_type(db: Session, leave_data: LeaveTypeCreate, current_user: Employee) -> LeaveType:
     if current_user.role not in [RoleEnum.HR, RoleEnum.SUPER_ADMIN]:
         raise HTTPException(status_code=403, detail="Only HR can create leave types")
     normalized_name = leave_data.name.strip()
@@ -169,7 +169,7 @@ def create_leave_type(db: Session, leave_data: LeaveTypeCreate, current_user: Se
     db.refresh(leave_type)
     return leave_type
 
-def update_leave_type(db: Session, type_id: str, update_data: LeaveTypeUpdate, current_user: Sevak) -> LeaveType:
+def update_leave_type(db: Session, type_id: str, update_data: LeaveTypeUpdate, current_user: Employee) -> LeaveType:
     if current_user.role not in [RoleEnum.HR, RoleEnum.SUPER_ADMIN]:
         raise HTTPException(status_code=403, detail="Only HR can modify leave types")
 
@@ -192,7 +192,7 @@ def update_leave_type(db: Session, type_id: str, update_data: LeaveTypeUpdate, c
     # but that's complex. For simplicity, we just change the type definition constraint.
     return leave_type
 
-def delete_leave_type(db: Session, type_id: str, password: str, current_user: Sevak):
+def delete_leave_type(db: Session, type_id: str, password: str, current_user: Employee):
     if current_user.role not in [RoleEnum.HR, RoleEnum.SUPER_ADMIN]:
         raise HTTPException(status_code=403, detail="Only HR can delete leave types")
 
@@ -213,7 +213,7 @@ def delete_leave_type(db: Session, type_id: str, password: str, current_user: Se
     db.add(leave_type)
     db.commit()
 
-def get_leave_balances(db: Session, sevak_id: str, year: int) -> List[LeaveBalance]:
+def get_leave_balances(db: Session, employee_id: str, year: int) -> List[LeaveBalance]:
     active_types = db.query(LeaveType).filter(
         LeaveType.is_active == True,
         LeaveType.name != WEEK_OFF_TYPE_NAME,
@@ -221,25 +221,25 @@ def get_leave_balances(db: Session, sevak_id: str, year: int) -> List[LeaveBalan
 
     for lt in active_types:
         existing = db.query(LeaveBalance).filter(
-            LeaveBalance.sevak_id == sevak_id,
+            LeaveBalance.employee_id == employee_id,
             LeaveBalance.leave_type_id == lt.id,
             LeaveBalance.year == year
         ).first()
 
-        sevak = db.query(Sevak).filter(Sevak.id == sevak_id).first()
+        employee = db.query(Employee).filter(Employee.id == employee_id).first()
         total_allocated = lt.annual_quota
 
         # Pro-rata logic for joining year
-        if sevak and sevak.activated_at and year == sevak.activated_at.year:
-            join_month = sevak.activated_at.month
+        if employee and employee.activated_at and year == employee.activated_at.year:
+            join_month = employee.activated_at.month
             months_remaining = 12 - join_month + 1
             # Round to nearest 0.5 for clean balance
             total_allocated = round((lt.annual_quota * months_remaining / 12) * 2) / 2
-        elif sevak and sevak.activated_at and year < sevak.activated_at.year:
+        elif employee and employee.activated_at and year < employee.activated_at.year:
             total_allocated = 0
         if not existing:
             new_bal = LeaveBalance(
-                sevak_id=sevak_id,
+                employee_id=employee_id,
                 leave_type_id=lt.id,
                 year=year,
                 total_allocated=total_allocated,
@@ -251,7 +251,7 @@ def get_leave_balances(db: Session, sevak_id: str, year: int) -> List[LeaveBalan
     db.commit()
 
     return db.query(LeaveBalance).filter(
-        LeaveBalance.sevak_id == sevak_id,
+        LeaveBalance.employee_id == employee_id,
         LeaveBalance.year == year
     ).join(LeaveType, LeaveBalance.leave_type_id == LeaveType.id
     ).filter(
@@ -259,12 +259,12 @@ def get_leave_balances(db: Session, sevak_id: str, year: int) -> List[LeaveBalan
         LeaveType.name != WEEK_OFF_TYPE_NAME,
     ).all()
 
-def apply_for_leave(db: Session, request_data: LeaveRequestCreate, current_user: Sevak) -> LeaveRequest:
+def apply_for_leave(db: Session, request_data: LeaveRequestCreate, current_user: Employee) -> LeaveRequest:
     from datetime import date
-    from app.models.sevak import Sevak as SevakModel
+    from app.models.employee import Employee as EmployeeModel
 
     if current_user.role in [RoleEnum.SUPER_ADMIN, RoleEnum.ADMIN, RoleEnum.HR]:
-        raise HTTPException(status_code=403, detail="Leaves are available only for Sevak and HOD accounts")
+        raise HTTPException(status_code=403, detail="Leaves are available only for Employee and HOD accounts")
 
     # Basic validation
     if request_data.start_date > request_data.end_date:
@@ -274,7 +274,7 @@ def apply_for_leave(db: Session, request_data: LeaveRequestCreate, current_user:
         raise HTTPException(status_code=400, detail="Leave can be applied only from the account activation date")
 
     # Check for overlapping leaves - no day can be in more than one active leave plan
-    # Get all active (pending or approved) leave requests for this sevak
+    # Get all active (pending or approved) leave requests for this employee
     from app.models.leave import LeaveType
 
     active_statuses = [
@@ -287,7 +287,7 @@ def apply_for_leave(db: Session, request_data: LeaveRequestCreate, current_user:
     conflicting_request = db.query(LeaveRequest, LeaveType.name).join(
         LeaveType, LeaveRequest.leave_type_id == LeaveType.id
     ).filter(
-        LeaveRequest.sevak_id == current_user.id,
+        LeaveRequest.employee_id == current_user.id,
         LeaveRequest.status.in_(active_statuses),
         LeaveType.name != WEEK_OFF_TYPE_NAME,
         LeaveRequest.start_date <= request_data.end_date,
@@ -334,7 +334,7 @@ def apply_for_leave(db: Session, request_data: LeaveRequestCreate, current_user:
     get_leave_balances(db, current_user.id, current_year)
 
     balance = db.query(LeaveBalance).filter(
-        LeaveBalance.sevak_id == current_user.id,
+        LeaveBalance.employee_id == current_user.id,
         LeaveBalance.leave_type_id == request_data.leave_type_id,
         LeaveBalance.year == current_year
     ).first()
@@ -350,7 +350,7 @@ def apply_for_leave(db: Session, request_data: LeaveRequestCreate, current_user:
     db.add(balance)
 
     leave_request = LeaveRequest(
-        sevak_id=current_user.id,
+        employee_id=current_user.id,
         leave_type_id=request_data.leave_type_id,
         start_date=request_data.start_date,
         end_date=request_data.end_date,
@@ -365,9 +365,9 @@ def apply_for_leave(db: Session, request_data: LeaveRequestCreate, current_user:
 
     hod_for_department = None
     if current_user.department_id:
-        hod_for_department = db.query(SevakModel).filter(
-            SevakModel.department_id == current_user.department_id,
-            SevakModel.role == RoleEnum.HOD
+        hod_for_department = db.query(EmployeeModel).filter(
+            EmployeeModel.department_id == current_user.department_id,
+            EmployeeModel.role == RoleEnum.HOD
         ).first()
 
     # Status logic: Start as PENDING (needs HOD approval)
@@ -393,7 +393,7 @@ def apply_for_leave(db: Session, request_data: LeaveRequestCreate, current_user:
     db.refresh(leave_request)
     return leave_request
 
-def approve_leave(db: Session, request_id: str, action: str, approver: Sevak, rejection_reason: str = None) -> LeaveRequest:
+def approve_leave(db: Session, request_id: str, action: str, approver: Employee, rejection_reason: str = None) -> LeaveRequest:
     leave_req = db.query(LeaveRequest).filter(LeaveRequest.id == request_id).first()
     if not leave_req:
         raise HTTPException(status_code=404, detail="Request not found")
@@ -409,12 +409,12 @@ def approve_leave(db: Session, request_id: str, action: str, approver: Sevak, re
     def is_hod_on_leave(department_id):
         if not department_id:
             return False
-        from app.models.sevak import Sevak
-        hod = db.query(Sevak).filter(Sevak.department_id == department_id, Sevak.role == RoleEnum.HOD).first()
+        from app.models.employee import Employee
+        hod = db.query(Employee).filter(Employee.department_id == department_id, Employee.role == RoleEnum.HOD).first()
         return hod and hod.is_on_leave
 
     # Get applicant's department for checking HoD status
-    applicant = db.query(Sevak).filter(Sevak.id == leave_req.sevak_id).first()
+    applicant = db.query(Employee).filter(Employee.id == leave_req.employee_id).first()
     hod_is_absent = is_hod_on_leave(applicant.department_id) if applicant else False
 
     if action == "REJECT":
@@ -427,7 +427,7 @@ def approve_leave(db: Session, request_id: str, action: str, approver: Sevak, re
 
         # Revert pending balance
         balance = db.query(LeaveBalance).filter(
-            LeaveBalance.sevak_id == leave_req.sevak_id,
+            LeaveBalance.employee_id == leave_req.employee_id,
             LeaveBalance.leave_type_id == leave_req.leave_type_id,
             LeaveBalance.year == leave_req.start_date.year
         ).first()
@@ -455,7 +455,7 @@ def approve_leave(db: Session, request_id: str, action: str, approver: Sevak, re
 
             # Finalize balance changes
             balance = db.query(LeaveBalance).filter(
-                LeaveBalance.sevak_id == leave_req.sevak_id,
+                LeaveBalance.employee_id == leave_req.employee_id,
                 LeaveBalance.leave_type_id == leave_req.leave_type_id,
                 LeaveBalance.year == leave_req.start_date.year
             ).first()
@@ -478,7 +478,7 @@ NOTIFY_COOLDOWN_HOURS = 24
 
 
 def _resolve_pending_approver(db: Session, leave_req: LeaveRequest):
-    """Return (recipient_sevak, target_role) the request is currently waiting on.
+    """Return (recipient_employee, target_role) the request is currently waiting on.
 
     - PENDING  → waiting on the HOD of the requester's department.
     - HOD_APPROVED (and not yet APPROVED/REJECTED) → waiting on HR.
@@ -486,14 +486,14 @@ def _resolve_pending_approver(db: Session, leave_req: LeaveRequest):
     state already reached).
     """
     if leave_req.status == LeaveRequestStatus.PENDING:
-        requester = db.query(Sevak).filter(Sevak.id == leave_req.sevak_id).first()
+        requester = db.query(Employee).filter(Employee.id == leave_req.employee_id).first()
         if not requester or not requester.department_id:
             return None, None
         if leave_req.hod_skipped:
             return _resolve_any_hr(db), "HR"
-        hod = db.query(Sevak).filter(
-            Sevak.department_id == requester.department_id,
-            Sevak.role == RoleEnum.HOD,
+        hod = db.query(Employee).filter(
+            Employee.department_id == requester.department_id,
+            Employee.role == RoleEnum.HOD,
         ).first()
         if not hod:
             return _resolve_any_hr(db), "HR"
@@ -517,25 +517,25 @@ def _resolve_any_hr(db: Session):
     """
     from sqlalchemy import case
     hr = (
-        db.query(Sevak)
+        db.query(Employee)
         .filter(
-            Sevak.role == RoleEnum.HR,
-            Sevak.is_active.is_(True),
-            Sevak.status == SevakStatusEnum.ACTIVE,
+            Employee.role == RoleEnum.HR,
+            Employee.is_active.is_(True),
+            Employee.status == EmployeeStatusEnum.ACTIVE,
         )
-        .order_by(Sevak.first_name.asc())
+        .order_by(Employee.first_name.asc())
         .first()
     )
     if hr:
         return hr
     fallback = (
-        db.query(Sevak)
+        db.query(Employee)
         .filter(
-            Sevak.role.in_([RoleEnum.SUPER_ADMIN, RoleEnum.ADMIN]),
-            Sevak.is_active.is_(True),
-            Sevak.status == SevakStatusEnum.ACTIVE,
+            Employee.role.in_([RoleEnum.SUPER_ADMIN, RoleEnum.ADMIN]),
+            Employee.is_active.is_(True),
+            Employee.status == EmployeeStatusEnum.ACTIVE,
         )
-        .order_by(case((Sevak.role == RoleEnum.SUPER_ADMIN, 0), else_=1))
+        .order_by(case((Employee.role == RoleEnum.SUPER_ADMIN, 0), else_=1))
         .first()
     )
     return fallback
@@ -544,7 +544,7 @@ def _resolve_any_hr(db: Session):
 def notify_pending_approver(
     db: Session,
     request_id: str,
-    actor: Sevak,
+    actor: Employee,
 ) -> dict:
     """Send a reminder email to the next pending approver.
 
@@ -584,7 +584,7 @@ def notify_pending_approver(
             detail="No active approver is configured for this request.",
         )
 
-    requester = db.query(Sevak).filter(Sevak.id == leave_req.sevak_id).first()
+    requester = db.query(Employee).filter(Employee.id == leave_req.employee_id).first()
     leave_type = db.query(LeaveType).filter(LeaveType.id == leave_req.leave_type_id).first()
     leave_type_name = leave_type.name if leave_type else "Leave"
 
@@ -652,7 +652,7 @@ def auto_cancel_week_offs(db: Session) -> int:
     return cancelled
 
 
-def apply_week_off_swap(db: Session, sevak_id: str, swap_date: date) -> dict:
+def apply_week_off_swap(db: Session, employee_id: str, swap_date: date) -> dict:
     """
     Apply for a week-off swap.
     Swaps the default week-off day with the selected working day.
@@ -660,14 +660,14 @@ def apply_week_off_swap(db: Session, sevak_id: str, swap_date: date) -> dict:
     today = date.today()
     week_off_type = _get_or_create_week_off_type(db)
 
-    # Get sevak
-    sevak = db.query(Sevak).filter(Sevak.id == sevak_id).first()
-    if not sevak:
-        raise HTTPException(status_code=404, detail="Sevak not found")
-    if sevak.role in [RoleEnum.SUPER_ADMIN, RoleEnum.ADMIN, RoleEnum.HR]:
-        raise HTTPException(status_code=403, detail="Week-off swap is available only for Sevak and HOD accounts")
+    # Get employee
+    employee = db.query(Employee).filter(Employee.id == employee_id).first()
+    if not employee:
+        raise HTTPException(status_code=404, detail="Employee not found")
+    if employee.role in [RoleEnum.SUPER_ADMIN, RoleEnum.ADMIN, RoleEnum.HR]:
+        raise HTTPException(status_code=403, detail="Week-off swap is available only for Employee and HOD accounts")
 
-    swap_start, swap_end = _get_swap_window(today, sevak.default_week_off)
+    swap_start, swap_end = _get_swap_window(today, employee.default_week_off)
 
     # Validate swap date is within window
     if swap_date < swap_start or swap_date > swap_end:
@@ -677,25 +677,25 @@ def apply_week_off_swap(db: Session, sevak_id: str, swap_date: date) -> dict:
         )
 
     # Check swap date is not the default week-off day
-    if _sun_based_weekday(swap_date) == _DAY_NAME_TO_NUM.get(sevak.default_week_off or "Sunday", 0):
+    if _sun_based_weekday(swap_date) == _DAY_NAME_TO_NUM.get(employee.default_week_off or "Sunday", 0):
         raise HTTPException(status_code=400, detail="Cannot swap with your default week-off day")
 
     # Check if already have a week-off for the same swap cycle.
-    target_default_date = _target_default_for_swap(swap_date, sevak.default_week_off)
+    target_default_date = _target_default_for_swap(swap_date, employee.default_week_off)
     existing_wos = db.query(LeaveRequest).filter(
-        LeaveRequest.sevak_id == sevak_id,
+        LeaveRequest.employee_id == employee_id,
         LeaveRequest.leave_type_id == week_off_type.id,
         LeaveRequest.status.in_([LeaveRequestStatus.PENDING, LeaveRequestStatus.HOD_APPROVED, LeaveRequestStatus.APPROVED])
     ).all()
 
     for ewo in existing_wos:
-        if _target_default_for_swap(ewo.start_date, sevak.default_week_off) == target_default_date:
+        if _target_default_for_swap(ewo.start_date, employee.default_week_off) == target_default_date:
             raise HTTPException(status_code=400, detail="You already have a week-off swap for this cycle")
 
     # Check for overlapping leaves
     active_statuses = [LeaveRequestStatus.PENDING, LeaveRequestStatus.HOD_APPROVED, LeaveRequestStatus.APPROVED]
     conflicting = db.query(LeaveRequest).filter(
-        LeaveRequest.sevak_id == sevak_id,
+        LeaveRequest.employee_id == employee_id,
         LeaveRequest.status.in_(active_statuses),
         LeaveRequest.leave_type_id != week_off_type.id,
         LeaveRequest.start_date <= swap_date,
@@ -710,25 +710,25 @@ def apply_week_off_swap(db: Session, sevak_id: str, swap_date: date) -> dict:
 
     # Create the week-off swap request
     leave_request = LeaveRequest(
-        sevak_id=sevak_id,
+        employee_id=employee_id,
         leave_type_id=week_off_type.id,
         start_date=swap_date,
         end_date=swap_date,
         total_days=1,
-        reason=f"Week Off Swap - Swapping {sevak.default_week_off or 'Sunday'} for {swap_date.strftime('%A')}",
+        reason=f"Week Off Swap - Swapping {employee.default_week_off or 'Sunday'} for {swap_date.strftime('%A')}",
         status=LeaveRequestStatus.PENDING
     )
 
     # Check if HOD exists for department
     hod_for_department = None
-    if sevak.department_id:
-        hod_for_department = db.query(Sevak).filter(
-            Sevak.department_id == sevak.department_id,
-            Sevak.role == RoleEnum.HOD
+    if employee.department_id:
+        hod_for_department = db.query(Employee).filter(
+            Employee.department_id == employee.department_id,
+            Employee.role == RoleEnum.HOD
         ).first()
 
     # Skip HOD if no HOD exists, the applicant is HOD, or the department HOD is on leave.
-    if not hod_for_department or sevak.role == RoleEnum.HOD or (hod_for_department and hod_for_department.is_on_leave):
+    if not hod_for_department or employee.role == RoleEnum.HOD or (hod_for_department and hod_for_department.is_on_leave):
         leave_request.status = LeaveRequestStatus.HOD_APPROVED
         leave_request.hod_skipped = True
 
@@ -740,7 +740,7 @@ def apply_week_off_swap(db: Session, sevak_id: str, swap_date: date) -> dict:
     return leave_request
 
 
-def get_week_off_status(db: Session, sevak_id: str) -> dict:
+def get_week_off_status(db: Session, employee_id: str) -> dict:
     """
     Live weekly snapshot for the Week Off widget.
     Also triggers lazy auto-cancel as a side-effect.
@@ -750,22 +750,22 @@ def get_week_off_status(db: Session, sevak_id: str) -> dict:
 
     today = date.today()
     week_off_type = _get_or_create_week_off_type(db)
-    sevak = db.query(Sevak).filter(Sevak.id == sevak_id).first()
-    if not sevak:
-        raise HTTPException(status_code=404, detail="Sevak not found")
-    if sevak.role in [RoleEnum.SUPER_ADMIN, RoleEnum.ADMIN, RoleEnum.HR]:
-        raise HTTPException(status_code=403, detail="Week-off swap is available only for Sevak and HOD accounts")
+    employee = db.query(Employee).filter(Employee.id == employee_id).first()
+    if not employee:
+        raise HTTPException(status_code=404, detail="Employee not found")
+    if employee.role in [RoleEnum.SUPER_ADMIN, RoleEnum.ADMIN, RoleEnum.HR]:
+        raise HTTPException(status_code=403, detail="Week-off swap is available only for Employee and HOD accounts")
 
-    swap_start, swap_end = _get_swap_window(today, sevak.default_week_off)
-    target_default_date = _target_default_for_swap(swap_end, sevak.default_week_off)
+    swap_start, swap_end = _get_swap_window(today, employee.default_week_off)
+    target_default_date = _target_default_for_swap(swap_end, employee.default_week_off)
 
-    approved, pending = get_week_off_usage(db, sevak_id, target_default_date)
+    approved, pending = get_week_off_usage(db, employee_id, target_default_date)
 
     # Find current week’s request
     current_request = None
     if week_off_type:
         all_wos = db.query(LeaveRequest).filter(
-            LeaveRequest.sevak_id == sevak_id,
+            LeaveRequest.employee_id == employee_id,
             LeaveRequest.leave_type_id == week_off_type.id,
             LeaveRequest.status.in_([
                 LeaveRequestStatus.PENDING,
@@ -774,7 +774,7 @@ def get_week_off_status(db: Session, sevak_id: str) -> dict:
             ])
         ).all()
         for req in all_wos:
-            if _target_default_for_swap(req.start_date, sevak.default_week_off) == target_default_date:
+            if _target_default_for_swap(req.start_date, employee.default_week_off) == target_default_date:
                 current_request = {
                     "id": str(req.id),
                     "date": str(req.start_date),
@@ -783,7 +783,7 @@ def get_week_off_status(db: Session, sevak_id: str) -> dict:
                 break
 
     return {
-        "default_week_off_day": sevak.default_week_off or "Sunday",
+        "default_week_off_day": employee.default_week_off or "Sunday",
         "default_week_off_date": str(target_default_date),
         "applicable_week_start": str(swap_start),
         "applicable_week_end": str(swap_end),
@@ -793,29 +793,29 @@ def get_week_off_status(db: Session, sevak_id: str) -> dict:
         "current_request": current_request,
         "week_off_type_id": str(week_off_type.id) if week_off_type else None,
     }
-def update_sevak_leave_balances(db: Session, sevak_id: str, updates: List, current_user: Sevak):
-    """Manually update leave balances for a sevak."""
-    sevak = db.query(Sevak).filter(Sevak.id == sevak_id).first()
-    if not sevak:
-        raise HTTPException(status_code=404, detail="Sevak not found")
+def update_employee_leave_balances(db: Session, employee_id: str, updates: List, current_user: Employee):
+    """Manually update leave balances for a employee."""
+    employee = db.query(Employee).filter(Employee.id == employee_id).first()
+    if not employee:
+        raise HTTPException(status_code=404, detail="Employee not found")
 
     # Permission checks
     if current_user.role not in [RoleEnum.HR, RoleEnum.ADMIN, RoleEnum.SUPER_ADMIN]:
         raise HTTPException(status_code=403, detail="Not authorized to modify balances")
 
     if current_user.role == RoleEnum.HR:
-        if sevak.hr_leave_modified:
+        if employee.hr_leave_modified:
             raise HTTPException(status_code=403, detail="HR can only modify balances once per account")
-        if not sevak.activated_at or sevak.activated_at.date() != date.today():
+        if not employee.activated_at or employee.activated_at.date() != date.today():
             raise HTTPException(status_code=403, detail="HR can only modify balances on the activation day")
 
     current_year = date.today().year
     # Ensure balances exist
-    get_leave_balances(db, sevak_id, current_year)
+    get_leave_balances(db, employee_id, current_year)
 
     for item in updates:
         balance = db.query(LeaveBalance).filter(
-            LeaveBalance.sevak_id == sevak_id,
+            LeaveBalance.employee_id == employee_id,
             LeaveBalance.leave_type_id == item.leave_type_id,
             LeaveBalance.year == current_year
         ).first()
@@ -825,8 +825,8 @@ def update_sevak_leave_balances(db: Session, sevak_id: str, updates: List, curre
             db.add(balance)
 
     if current_user.role == RoleEnum.HR:
-        sevak.hr_leave_modified = True
-        db.add(sevak)
+        employee.hr_leave_modified = True
+        db.add(employee)
 
     db.commit()
     return {"message": "Balances updated successfully"}

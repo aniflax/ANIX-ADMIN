@@ -106,5 +106,5 @@ Before every production release:
 - Activation link on mobile.
 - Attendance mark and duplicate-tap rejection.
 - Leave apply/approve/reject.
-- Sevak profile document preview/download.
+- Employee profile document preview/download.
 - Month-end report/export.

@@ -17,7 +17,7 @@ from app.core.config import settings
 from app.core.database import SessionLocal
 from app.core.security import create_access_token
 from app.models.department import ConfigAccessLevel, SystemConfig
-from app.models.sevak import AccountEvent, Sevak
+from app.models.employee import AccountEvent, Employee
 
 logger = logging.getLogger(__name__)
 
@@ -346,24 +346,24 @@ Email provider: {get_email_provider(db)}
 
 def send_account_activation_email(
     db: Session,
-    sevak: Sevak,
+    employee: Employee,
     requested_by_name: Optional[str] = None,
     frontend_url: Optional[str] = None,
 ) -> bool:
-    if not sevak.email:
-        logger.warning("Skipping activation email for sevak %s because email is not configured.", sevak.id)
+    if not employee.email:
+        logger.warning("Skipping activation email for employee %s because email is not configured.", employee.id)
         return False
 
     activation_token = create_access_token(
-        data={"sub": sevak.id, "purpose": "activate_account"},
+        data={"sub": employee.id, "purpose": "activate_account"},
         expires_delta=timedelta(minutes=30),
     )
     activation_base_url = get_mobile_accessible_frontend_url(frontend_url or settings.FRONTEND_URL)
-    activation_link = f"{activation_base_url}/activate-account?token={activation_token}&id={sevak.id}"
+    activation_link = f"{activation_base_url}/activate-account?token={activation_token}&id={employee.id}"
 
     db.add(
         AccountEvent(
-            sevak_id=sevak.id,
+            employee_id=employee.id,
             event_type="ACCOUNT_ACTIVATION_REQUESTED",
             resolved_by=None,
             notes=(
@@ -375,32 +375,32 @@ def send_account_activation_email(
     )
     db.commit()
 
-    role_label = str(sevak.role.value if hasattr(sevak.role, "value") else sevak.role).replace("_", " ")
-    id_label = "Account ID" if role_label in {"ADMIN", "HR", "SUPER ADMIN"} else "Sevak ID"
+    role_label = str(employee.role.value if hasattr(employee.role, "value") else employee.role).replace("_", " ")
+    id_label = "Account ID" if role_label in {"ADMIN", "HR", "SUPER ADMIN"} else "Employee ID"
     subject = "Activate your account - anix HRMS"
-    body = f"""Hi {sevak.first_name} {sevak.last_name},
+    body = f"""Hi {employee.first_name} {employee.last_name},
 
 Your {role_label} account has been created in anix HRMS.
 Please click the Activation Link to activate your account.
 
 This link will expire in 30 minutes.
-Your {id_label} is {sevak.sevak_id if sevak.sevak_id else 'allocated after activation'}.
+Your {id_label} is {employee.employee_id if employee.employee_id else 'allocated after activation'}.
 
 Activation link:
 {activation_link}
 """
     html_body = f"""<html><body>
-<p>Hi {sevak.first_name} {sevak.last_name},</p>
+<p>Hi {employee.first_name} {employee.last_name},</p>
 <p>Your <strong>{role_label}</strong> account has been created in anix HRMS.</p>
 <p>Please click the activation button to activate your account.</p>
-<p><strong>{id_label}:</strong> {sevak.sevak_id if sevak.sevak_id else 'Allocated after activation'}</p>
+<p><strong>{id_label}:</strong> {employee.employee_id if employee.employee_id else 'Allocated after activation'}</p>
 <p><a href="{activation_link}" style="display:inline-block;padding:10px 16px;background:#f47c20;color:#ffffff;text-decoration:none;border-radius:6px;font-weight:700;">Activate Account</a></p>
 <p>If the button does not open on your phone, copy and paste this full link in the same browser used for anix HRMS:</p>
 <p style="word-break:break-all;"><a href="{activation_link}">{activation_link}</a></p>
 <p>This link will expire in 30 minutes.</p>
 </body></html>"""
     message = _build_message(
-        to_email=sevak.email,
+        to_email=employee.email,
         subject=subject,
         body=body,
         html_body=html_body,
@@ -414,31 +414,31 @@ Activation link:
 def send_account_credentials_email(
     *,
     db: Session,
-    sevak: Sevak,
+    employee: Employee,
     temporary_password: str,
     login_link: str,
     requested_by_name: Optional[str] = None,
 ) -> bool:
-    if not sevak.email:
-        logger.warning("Skipping credentials email for sevak %s because email is not configured.", sevak.id)
+    if not employee.email:
+        logger.warning("Skipping credentials email for employee %s because email is not configured.", employee.id)
         return False
 
-    role_label = str(sevak.role.value if hasattr(sevak.role, "value") else sevak.role).replace("_", " ")
+    role_label = str(employee.role.value if hasattr(employee.role, "value") else employee.role).replace("_", " ")
     subject = "Your anix HRMS login details"
-    body = f"""Hi {sevak.first_name} {sevak.last_name},
+    body = f"""Hi {employee.first_name} {employee.last_name},
 
 Your anix HRMS {role_label} account login details are below.
 
-Account ID: {sevak.sevak_id}
+Account ID: {employee.employee_id}
 Temporary Password: {temporary_password}
 Login link: {login_link}
 
 Please activate your account first if you have not already done so, then sign in and change your password immediately.
 """
     html_body = f"""<html><body>
-<p>Hi {sevak.first_name} {sevak.last_name},</p>
+<p>Hi {employee.first_name} {employee.last_name},</p>
 <p>Your anix HRMS <strong>{role_label}</strong> account login details are below.</p>
-<p><strong>Account ID:</strong> {sevak.sevak_id}</p>
+<p><strong>Account ID:</strong> {employee.employee_id}</p>
 <p><strong>Temporary Password:</strong> {temporary_password}</p>
 <p><a href="{login_link}" style="display:inline-block;padding:10px 16px;background:#f47c20;color:#ffffff;text-decoration:none;border-radius:6px;font-weight:700;">Open anix HRMS</a></p>
 <p>Please activate your account first if you have not already done so, then sign in and change your password immediately.</p>
@@ -446,7 +446,7 @@ Please activate your account first if you have not already done so, then sign in
 
     db.add(
         AccountEvent(
-            sevak_id=sevak.id,
+            employee_id=employee.id,
             event_type="ACCOUNT_CREDENTIALS_SENT",
             notes=(
                 f"Login credentials sent by {requested_by_name}"
@@ -458,7 +458,7 @@ Please activate your account first if you have not already done so, then sign in
     db.commit()
 
     message = _build_message(
-        to_email=sevak.email,
+        to_email=employee.email,
         subject=subject,
         body=body,
         html_body=html_body,
@@ -509,28 +509,28 @@ This OTP will expire in 10 minutes.
 
 def create_password_reset_notification(
     db: Session,
-    sevak: Sevak,
+    employee: Employee,
     requested_by_id: Optional[str] = None,
     requested_by_name: Optional[str] = None,
     notes: Optional[str] = None,
 ) -> bool:
-    if not sevak.email:
-        logger.warning("Skipping reset email for sevak %s because email is not configured.", sevak.id)
+    if not employee.email:
+        logger.warning("Skipping reset email for employee %s because email is not configured.", employee.id)
         return False
 
     validity_minutes = get_password_reset_link_validity_minutes(db)
     reset_token = create_access_token(
-        data={"sub": sevak.id, "purpose": "reset_password"},
+        data={"sub": employee.id, "purpose": "reset_password"},
         expires_delta=timedelta(minutes=validity_minutes),
     )
-    reset_link = f"{settings.FRONTEND_URL}/reset-password?token={reset_token}&id={sevak.id}"
+    reset_link = f"{settings.FRONTEND_URL}/reset-password?token={reset_token}&id={employee.id}"
 
     # Store token issuance time to invalidate previous tokens
-    sevak.password_reset_token_issued_at = get_local_now()
+    employee.password_reset_token_issued_at = get_local_now()
 
     db.add(
         AccountEvent(
-            sevak_id=sevak.id,
+            employee_id=employee.id,
             event_type="PASSWORD_RESET_REQUESTED",
             resolved_by=requested_by_id,
             notes=notes or (
@@ -543,21 +543,21 @@ def create_password_reset_notification(
     db.commit()
 
     return send_password_reset_email(
-        email_to=sevak.email,
+        email_to=employee.email,
         reset_link=reset_link,
-        user_name=f"{sevak.first_name} {sevak.last_name}",
+        user_name=f"{employee.first_name} {employee.last_name}",
         db=db,
         expiry_minutes=validity_minutes,
     )
 
 
-def send_attendance_reminder_email(db: Session, sevak: Sevak, reminder_date: Optional[date] = None) -> bool:
+def send_attendance_reminder_email(db: Session, employee: Employee, reminder_date: Optional[date] = None) -> bool:
     reminder_date = reminder_date or datetime.now().date()
     deadline_time = get_attendance_deadline_time(db)
     official_email = get_official_communication_email(db)
 
     subject = "Attendance Reminder - anix HRMS"
-    body = f"""Hi {sevak.first_name} {sevak.last_name},
+    body = f"""Hi {employee.first_name} {employee.last_name},
 
 This is a reminder to mark your attendance for {reminder_date.strftime('%d-%b-%Y')}.
 
@@ -566,7 +566,7 @@ Please mark your attendance as soon as possible.
 Official communication: {official_email}
 """
     message = _build_message(
-        to_email=sevak.email,
+        to_email=employee.email,
         subject=subject,
         body=body,
         reply_to=official_email,
@@ -579,8 +579,8 @@ Official communication: {official_email}
 def send_leave_pending_notification_email(
     db: Session,
     *,
-    recipient: Sevak,
-    requester: Sevak,
+    recipient: Employee,
+    requester: Employee,
     leave_type_name: str,
     start_date,
     end_date,
@@ -605,7 +605,7 @@ def send_leave_pending_notification_email(
     subject = f"Leave request awaiting your approval - {requester.first_name} {requester.last_name}"
     body = f"""Hi {recipient.first_name} {recipient.last_name},
 
-A leave request from {requester.first_name} {requester.last_name} (ID #{requester.sevak_id}) is awaiting your approval.
+A leave request from {requester.first_name} {requester.last_name} (ID #{requester.employee_id}) is awaiting your approval.
 
 Leave Type : {leave_type_name}
 Period     : {start_date} to {end_date} ({total_days} day(s))
@@ -618,7 +618,7 @@ This is an automated reminder from anix HRMS.
 """
     html_body = f"""<html><body>
 <p>Hi {recipient.first_name} {recipient.last_name},</p>
-<p>A leave request from <strong>{requester.first_name} {requester.last_name}</strong> (ID #{requester.sevak_id}) is awaiting your approval.</p>
+<p>A leave request from <strong>{requester.first_name} {requester.last_name}</strong> (ID #{requester.employee_id}) is awaiting your approval.</p>
 <table cellpadding="6" style="border-collapse:collapse;">
   <tr><td><b>Leave Type</b></td><td>{leave_type_name}</td></tr>
   <tr><td><b>Period</b></td><td>{start_date} to {end_date} ({total_days} day(s))</td></tr>
@@ -643,7 +643,7 @@ This is an automated reminder from anix HRMS.
 def send_bulk_communication_email(
     db: Session,
     *,
-    recipient: Sevak,
+    recipient: Employee,
     subject: str,
     body: str,
     sender_name: str | None = None,
@@ -691,7 +691,7 @@ def process_attendance_reminders(db: Session, force: bool = False) -> dict:
         get_attendance_deadline,
         get_local_now,
         get_local_today,
-        get_sevaks_without_attendance_today,
+        get_employees_without_attendance_today,
         is_attendance_reminder_enabled,
     )
 
@@ -766,17 +766,17 @@ def process_attendance_reminders(db: Session, force: bool = False) -> dict:
                     "deadline_time": deadline_value,
                 }
 
-        pending_sevaks = get_sevaks_without_attendance_today(db)
+        pending_employees = get_employees_without_attendance_today(db)
         sent = 0
         skipped = 0
         failed = 0
 
-        for sevak in pending_sevaks:
-            if not sevak.email:
+        for employee in pending_employees:
+            if not employee.email:
                 skipped += 1
                 continue
 
-            if send_attendance_reminder_email(db, sevak, reminder_date=today):
+            if send_attendance_reminder_email(db, employee, reminder_date=today):
                 sent += 1
             else:
                 failed += 1

@@ -5,16 +5,16 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 from app.core.database import Base
 from app.core.timezone import get_local_now
 
-class SevakLocation(Base):
-    """Multi-location allocation for sevaks - allows a user to be assigned to multiple department locations."""
-    __tablename__ = "sevak_locations"
+class EmployeeLocation(Base):
+    """Multi-location allocation for employees - allows a user to be assigned to multiple department locations."""
+    __tablename__ = "employee_locations"
 
     id: Mapped[str] = mapped_column(
         String(36), primary_key=True,
         default=lambda: str(uuid.uuid4())
     )
-    sevak_id: Mapped[str] = mapped_column(
-        String(36), ForeignKey("sevaks.id"), nullable=False
+    employee_id: Mapped[str] = mapped_column(
+        String(36), ForeignKey("employees.id"), nullable=False
     )
     department_id: Mapped[str] = mapped_column(
         String(36), ForeignKey("departments.id"), nullable=False

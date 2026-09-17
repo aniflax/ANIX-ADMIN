@@ -7,7 +7,7 @@ from datetime import datetime, date, timedelta
 from app.core.timezone import IST, get_local_now, get_local_today
 from app.models.attendance import AttendanceLog, AttendanceStatus, AttendanceSource
 from app.models.leave import LeaveRequest, LeaveRequestStatus, LeaveType
-from app.models.sevak import Sevak, SevakStatusEnum, RoleEnum
+from app.models.employee import Employee, EmployeeStatusEnum, RoleEnum
 from app.models.department import Department
 from app.models.department_location import DepartmentLocation
 from app.models.location import Location
@@ -21,7 +21,7 @@ from app.services.week_off_history import get_effective_week_off_day
 # imports keep working.
 __all__ = ["get_local_now", "get_local_today", "IST"]
 
-TRACKED_ATTENDANCE_ROLES = [RoleEnum.SEVAK, RoleEnum.HOD]
+TRACKED_ATTENDANCE_ROLES = [RoleEnum.EMPLOYEE, RoleEnum.HOD]
 
 def get_geo_threshold(db: Session) -> int:
     """Get geo threshold from system config, default to 500m."""
@@ -30,11 +30,11 @@ def get_geo_threshold(db: Session) -> int:
         return int(config.value)
     return 500
 
-def get_week_off_count(db: Session, sevak_id: str, week_start: date) -> int:
+def get_week_off_count(db: Session, employee_id: str, week_start: date) -> int:
     """Get count of week-offs taken in the current week."""
     week_end = week_start + timedelta(days=6)
     count = db.query(AttendanceLog).filter(
-        AttendanceLog.sevak_id == sevak_id,
+        AttendanceLog.employee_id == employee_id,
         AttendanceLog.date >= week_start,
         AttendanceLog.date <= week_end,
         AttendanceLog.status == AttendanceStatus.WEEK_OFF
@@ -45,13 +45,13 @@ def get_week_start(d: date) -> date:
     """Get the start of the week (Monday) for a given date."""
     return d - timedelta(days=d.weekday())
 
-def get_sevak_allocated_locations(db: Session, sevak_id: str) -> list:
-    """Get all active locations allocated to a sevak."""
-    from app.models.sevak_location import SevakLocation
+def get_employee_allocated_locations(db: Session, employee_id: str) -> list:
+    """Get all active locations allocated to a employee."""
+    from app.models.employee_location import EmployeeLocation
 
-    locations = db.query(SevakLocation).filter(
-        SevakLocation.sevak_id == sevak_id,
-        SevakLocation.is_active == True
+    locations = db.query(EmployeeLocation).filter(
+        EmployeeLocation.employee_id == employee_id,
+        EmployeeLocation.is_active == True
     ).all()
     return locations
 
@@ -117,13 +117,13 @@ def _normalize_threshold_meters(value, fallback: int = 500) -> int:
     except (TypeError, ValueError):
         return fallback
 
-def get_attendance_location_candidates(db: Session, sevak: Sevak) -> list[dict]:
-    """Return all office locations that can validate attendance for a sevak."""
+def get_attendance_location_candidates(db: Session, employee: Employee) -> list[dict]:
+    """Return all office locations that can validate attendance for a employee."""
     candidates = []
     default_threshold = get_geo_threshold(db)
 
-    if _table_exists(db, "sevak_locations"):
-        for location in get_sevak_allocated_locations(db, sevak.id):
+    if _table_exists(db, "employee_locations"):
+        for location in get_employee_allocated_locations(db, employee.id):
             candidate = _make_location_candidate(
                 _candidate_location_name(location),
                 _candidate_location_lat(location),
@@ -133,13 +133,13 @@ def get_attendance_location_candidates(db: Session, sevak: Sevak) -> list[dict]:
             if candidate:
                 candidates.append(candidate)
 
-    if sevak.department_id:
+    if employee.department_id:
         if _table_exists(db, "locations") and _table_exists(db, "department_locations"):
             department_locations = db.query(Location).join(
                 DepartmentLocation,
                 DepartmentLocation.location_id == Location.id,
             ).filter(
-                DepartmentLocation.department_id == sevak.department_id,
+                DepartmentLocation.department_id == employee.department_id,
                 Location.is_active == True,
             ).all()
             for location in department_locations:
@@ -152,7 +152,7 @@ def get_attendance_location_candidates(db: Session, sevak: Sevak) -> list[dict]:
                 if candidate:
                     candidates.append(candidate)
 
-        dept = db.query(Department).filter(Department.id == sevak.department_id).first()
+        dept = db.query(Department).filter(Department.id == employee.department_id).first()
         if dept and dept.location_lat is not None and dept.location_lng is not None:
             candidate = _make_location_candidate(
                 dept.name,
@@ -178,11 +178,11 @@ def get_attendance_location_candidates(db: Session, sevak: Sevak) -> list[dict]:
 
     return deduped
 
-def find_closest_attendance_location(db: Session, sevak: Sevak, lat: float, lng: float) -> tuple[dict | None, float | None]:
+def find_closest_attendance_location(db: Session, employee: Employee, lat: float, lng: float) -> tuple[dict | None, float | None]:
     closest_candidate = None
     closest_distance = None
 
-    for candidate in get_attendance_location_candidates(db, sevak):
+    for candidate in get_attendance_location_candidates(db, employee):
         distance = calculate_distance(lat, lng, candidate["lat"], candidate["lng"])
         if closest_distance is None or distance < closest_distance:
             closest_distance = distance
@@ -196,7 +196,7 @@ def is_outside_attendance_location(db: Session, candidate: dict | None, distance
     threshold = _normalize_threshold_meters(candidate.get("threshold_meters"), get_geo_threshold(db))
     return distance > threshold
 
-def is_attendance_log_geo_mismatch(db: Session, sevak: Sevak, log: AttendanceLog) -> bool:
+def is_attendance_log_geo_mismatch(db: Session, employee: Employee, log: AttendanceLog) -> bool:
     """Return the effective geo mismatch state for a saved attendance log."""
     if log.geo_flagged:
         return True
@@ -206,7 +206,7 @@ def is_attendance_log_geo_mismatch(db: Session, sevak: Sevak, log: AttendanceLog
     try:
         closest_location, closest_distance = find_closest_attendance_location(
             db,
-            sevak,
+            employee,
             log.location_lat,
             log.location_lng,
         )
@@ -216,10 +216,10 @@ def is_attendance_log_geo_mismatch(db: Session, sevak: Sevak, log: AttendanceLog
 
     return is_outside_attendance_location(db, closest_location, closest_distance)
 
-def serialize_attendance_log(db: Session, log: AttendanceLog, sevak: Sevak) -> dict:
+def serialize_attendance_log(db: Session, log: AttendanceLog, employee: Employee) -> dict:
     data = {
         "id": log.id,
-        "sevak_id": log.sevak_id,
+        "employee_id": log.employee_id,
         "date": log.date,
         "check_in_time": log.check_in_time,
         "check_out_time": log.check_out_time,
@@ -241,7 +241,7 @@ def serialize_attendance_log(db: Session, log: AttendanceLog, sevak: Sevak) -> d
 
     data["location_map_url"] = f"https://www.google.com/maps?q={log.location_lat},{log.location_lng}"
     try:
-        closest_location, closest_distance = find_closest_attendance_location(db, sevak, log.location_lat, log.location_lng)
+        closest_location, closest_distance = find_closest_attendance_location(db, employee, log.location_lat, log.location_lng)
     except Exception:
         db.rollback()
         closest_location, closest_distance = None, None
@@ -255,13 +255,13 @@ def serialize_attendance_log(db: Session, log: AttendanceLog, sevak: Sevak) -> d
 
     return data
 
-def get_day_leave_status(db: Session, sevak_id: str, target_date: date, default_week_off: str | None) -> tuple[bool, bool]:
+def get_day_leave_status(db: Session, employee_id: str, target_date: date, default_week_off: str | None) -> tuple[bool, bool]:
     """Return whether target_date is an approved leave day or an effective week-off day."""
     week_start = get_week_start(target_date)
     week_end = week_start + timedelta(days=6)
-    effective_week_off = get_effective_week_off_day(db, sevak_id, target_date, default_week_off)
+    effective_week_off = get_effective_week_off_day(db, employee_id, target_date, default_week_off)
     approved_week_off_requests = db.query(LeaveRequest).join(LeaveType, LeaveType.id == LeaveRequest.leave_type_id).filter(
-        LeaveRequest.sevak_id == sevak_id,
+        LeaveRequest.employee_id == employee_id,
         LeaveRequest.status == LeaveRequestStatus.APPROVED,
         LeaveType.name == "Week Off",
         LeaveRequest.start_date >= week_start,
@@ -269,7 +269,7 @@ def get_day_leave_status(db: Session, sevak_id: str, target_date: date, default_
     ).all()
 
     approved_requests = db.query(LeaveRequest).filter(
-        LeaveRequest.sevak_id == sevak_id,
+        LeaveRequest.employee_id == employee_id,
         LeaveRequest.status == LeaveRequestStatus.APPROVED,
         LeaveRequest.start_date <= target_date,
         LeaveRequest.end_date >= target_date
@@ -301,10 +301,10 @@ def get_day_leave_status(db: Session, sevak_id: str, target_date: date, default_
 
     return is_leave_day, (is_default_week_off or is_approved_week_off_day)
 
-def mark_attendance(db: Session, request: AttendanceMarkRequest, current_user: Sevak) -> AttendanceLog:
+def mark_attendance(db: Session, request: AttendanceMarkRequest, current_user: Employee) -> AttendanceLog:
     """Mark attendance for the current day - single mark (no check-in/check-out)."""
     if current_user.role in [RoleEnum.SUPER_ADMIN, RoleEnum.ADMIN, RoleEnum.HR]:
-        raise HTTPException(status_code=403, detail="Attendance is available only for Sevak and HOD accounts")
+        raise HTTPException(status_code=403, detail="Attendance is available only for Employee and HOD accounts")
 
     now = get_local_now()
     today = now.date()
@@ -314,7 +314,7 @@ def mark_attendance(db: Session, request: AttendanceMarkRequest, current_user: S
 
     # Check if already marked today
     existing_log = db.query(AttendanceLog).filter(
-        AttendanceLog.sevak_id == current_user.id,
+        AttendanceLog.employee_id == current_user.id,
         AttendanceLog.date == today
     ).first()
 
@@ -323,7 +323,7 @@ def mark_attendance(db: Session, request: AttendanceMarkRequest, current_user: S
 
     is_leave_day, is_week_off_day = get_day_leave_status(
         db=db,
-        sevak_id=current_user.id,
+        employee_id=current_user.id,
         target_date=today,
         default_week_off=current_user.default_week_off
     )
@@ -340,7 +340,7 @@ def mark_attendance(db: Session, request: AttendanceMarkRequest, current_user: S
 
     # Create new attendance record
     new_log = AttendanceLog(
-        sevak_id=current_user.id,
+        employee_id=current_user.id,
         date=today,
         check_in_time=now,
         source=request.source,
@@ -355,7 +355,7 @@ def mark_attendance(db: Session, request: AttendanceMarkRequest, current_user: S
     except IntegrityError as exc:
         db.rollback()
         existing_log = db.query(AttendanceLog).filter(
-            AttendanceLog.sevak_id == current_user.id,
+            AttendanceLog.employee_id == current_user.id,
             AttendanceLog.date == today
         ).first()
         if existing_log:
@@ -364,23 +364,23 @@ def mark_attendance(db: Session, request: AttendanceMarkRequest, current_user: S
     db.refresh(new_log)
     broadcast_attendance_change({
         "type": "attendance_marked",
-        "sevak_id": current_user.id,
+        "employee_id": current_user.id,
         "date": today.isoformat(),
         "source": request.source.value if hasattr(request.source, "value") else request.source,
     })
     return new_log
 
-def mark_week_off(db: Session, target_date: date, current_user: Sevak) -> AttendanceLog:
+def mark_week_off(db: Session, target_date: date, current_user: Employee) -> AttendanceLog:
     """Mark a day as week-off for the current user."""
     if current_user.role in [RoleEnum.SUPER_ADMIN, RoleEnum.ADMIN, RoleEnum.HR]:
-        raise HTTPException(status_code=403, detail="Week off attendance is available only for Sevak and HOD accounts")
+        raise HTTPException(status_code=403, detail="Week off attendance is available only for Employee and HOD accounts")
 
     if not current_user.activated_at or target_date < current_user.activated_at.date():
         raise HTTPException(status_code=400, detail="Week off can be marked only from the account activation date")
 
     # Check if already has a log for this date
     existing = db.query(AttendanceLog).filter(
-        AttendanceLog.sevak_id == current_user.id,
+        AttendanceLog.employee_id == current_user.id,
         AttendanceLog.date == target_date
     ).first()
 
@@ -404,7 +404,7 @@ def mark_week_off(db: Session, target_date: date, current_user: Sevak) -> Attend
         raise HTTPException(status_code=400, detail="Cannot mark week-off for previous weeks")
 
     new_log = AttendanceLog(
-        sevak_id=current_user.id,
+        employee_id=current_user.id,
         date=target_date,
         status=AttendanceStatus.WEEK_OFF,
         source=AttendanceSource.WEB
@@ -423,14 +423,14 @@ def get_weekly_flagged_attendance(db: Session) -> list[AttendanceLog]:
         AttendanceLog.geo_flagged == True,
         AttendanceLog.date >= last_week
     ).all()
-    sevaks = {
+    employees = {
         s.id: s
-        for s in db.query(Sevak).filter(
-            Sevak.id.in_([log.sevak_id for log in logs]),
-            Sevak.role.in_(TRACKED_ATTENDANCE_ROLES),
+        for s in db.query(Employee).filter(
+            Employee.id.in_([log.employee_id for log in logs]),
+            Employee.role.in_(TRACKED_ATTENDANCE_ROLES),
         ).all()
     }
-    return [log for log in logs if sevaks.get(log.sevak_id) and sevaks[log.sevak_id].activated_at and log.date >= sevaks[log.sevak_id].activated_at.date()]
+    return [log for log in logs if employees.get(log.employee_id) and employees[log.employee_id].activated_at and log.date >= employees[log.employee_id].activated_at.date()]
 
 def get_weekly_attendance(db: Session) -> list[AttendanceLog]:
     """HR Report fetcher for ALL weekly records."""
@@ -440,28 +440,28 @@ def get_weekly_attendance(db: Session) -> list[AttendanceLog]:
     logs = db.query(AttendanceLog).filter(
         AttendanceLog.date >= last_week
     ).all()
-    sevaks = {
+    employees = {
         s.id: s
-        for s in db.query(Sevak).filter(
-            Sevak.id.in_([log.sevak_id for log in logs]),
-            Sevak.role.in_(TRACKED_ATTENDANCE_ROLES),
+        for s in db.query(Employee).filter(
+            Employee.id.in_([log.employee_id for log in logs]),
+            Employee.role.in_(TRACKED_ATTENDANCE_ROLES),
         ).all()
     }
-    return [log for log in logs if sevaks.get(log.sevak_id) and sevaks[log.sevak_id].activated_at and log.date >= sevaks[log.sevak_id].activated_at.date()]
+    return [log for log in logs if employees.get(log.employee_id) and employees[log.employee_id].activated_at and log.date >= employees[log.employee_id].activated_at.date()]
 
-def manual_update_attendance(db: Session, request: AttendanceManualUpdate, current_user: Sevak) -> AttendanceLog:
-    """Manually update or create attendance record for a Sevak."""
-    target_sevak = db.query(Sevak).filter(Sevak.id == request.sevak_id).first()
-    if not target_sevak:
-        raise HTTPException(status_code=404, detail="Sevak not found")
-    if target_sevak.role not in TRACKED_ATTENDANCE_ROLES:
-        raise HTTPException(status_code=400, detail="Attendance can be updated only for Sevak and HOD accounts")
-    if not target_sevak.activated_at or request.date < target_sevak.activated_at.date():
+def manual_update_attendance(db: Session, request: AttendanceManualUpdate, current_user: Employee) -> AttendanceLog:
+    """Manually update or create attendance record for a Employee."""
+    target_employee = db.query(Employee).filter(Employee.id == request.employee_id).first()
+    if not target_employee:
+        raise HTTPException(status_code=404, detail="Employee not found")
+    if target_employee.role not in TRACKED_ATTENDANCE_ROLES:
+        raise HTTPException(status_code=400, detail="Attendance can be updated only for Employee and HOD accounts")
+    if not target_employee.activated_at or request.date < target_employee.activated_at.date():
         raise HTTPException(status_code=400, detail="Attendance can be updated only from the account activation date")
 
     # Find existing log
     log = db.query(AttendanceLog).filter(
-        AttendanceLog.sevak_id == request.sevak_id,
+        AttendanceLog.employee_id == request.employee_id,
         AttendanceLog.date == request.date
     ).first()
 
@@ -477,7 +477,7 @@ def manual_update_attendance(db: Session, request: AttendanceManualUpdate, curre
     else:
         # Create new
         log = AttendanceLog(
-            sevak_id=request.sevak_id,
+            employee_id=request.employee_id,
             date=request.date,
             check_in_time=request.check_in_time or get_local_now(),
             status=request.status,
@@ -492,31 +492,31 @@ def manual_update_attendance(db: Session, request: AttendanceManualUpdate, curre
     db.refresh(log)
     broadcast_attendance_change({
         "type": "attendance_updated",
-        "sevak_id": request.sevak_id,
+        "employee_id": request.employee_id,
         "date": request.date.isoformat(),
         "source": request.source.value if hasattr(request.source, "value") else request.source,
     })
     return log
 
-def get_sevaks_without_attendance_today(db: Session) -> list[Sevak]:
-    """Get all active sevaks who haven't marked attendance today."""
+def get_employees_without_attendance_today(db: Session) -> list[Employee]:
+    """Get all active employees who haven't marked attendance today."""
     today = get_local_today()
 
-    # Get all active sevaks
-    all_sevaks = db.query(Sevak).filter(
-        Sevak.is_active == True,
-        Sevak.role.in_(TRACKED_ATTENDANCE_ROLES),
+    # Get all active employees
+    all_employees = db.query(Employee).filter(
+        Employee.is_active == True,
+        Employee.role.in_(TRACKED_ATTENDANCE_ROLES),
     ).all()
 
-    # Get sevaks who have marked attendance today
-    marked_today = db.query(AttendanceLog.sevak_id).filter(
+    # Get employees who have marked attendance today
+    marked_today = db.query(AttendanceLog.employee_id).filter(
         AttendanceLog.date == today
     ).all()
     marked_ids = {r[0] for r in marked_today}
 
-    # Return sevaks who haven't marked and whose attendance period has started.
+    # Return employees who haven't marked and whose attendance period has started.
     return [
-        s for s in all_sevaks
+        s for s in all_employees
         if s.id not in marked_ids and s.activated_at and today >= s.activated_at.date()
     ]
 
@@ -561,9 +561,9 @@ def get_non_compliant_attendance(db: Session, start_date: date, end_date: date) 
     Get detailed attendance exception records for a date range.
     """
     results = []
-    active_sevaks = db.query(Sevak).filter(
-        Sevak.status == SevakStatusEnum.ACTIVE,
-        Sevak.role.in_(TRACKED_ATTENDANCE_ROLES),
+    active_employees = db.query(Employee).filter(
+        Employee.status == EmployeeStatusEnum.ACTIVE,
+        Employee.role.in_(TRACKED_ATTENDANCE_ROLES),
     ).all()
 
     # Get all logs and leaves in range for efficiency
@@ -571,23 +571,23 @@ def get_non_compliant_attendance(db: Session, start_date: date, end_date: date) 
         AttendanceLog.date >= start_date,
         AttendanceLog.date <= end_date
     ).all()
-    attendance_map = {(log.sevak_id, log.date): log for log in attendance_logs}
+    attendance_map = {(log.employee_id, log.date): log for log in attendance_logs}
 
     current_date = start_date
     while current_date <= end_date:
-        # Weekend logic handled by Sevak default week off mainly, but here we assume Sat/Sun
+        # Weekend logic handled by Employee default week off mainly, but here we assume Sat/Sun
         # are non-working for "Non-compliance" purposes unless marked.
         if current_date.weekday() >= 5:
             current_date += timedelta(days=1)
             continue
 
-        for sevak in active_sevaks:
-            if not sevak.activated_at or current_date < sevak.activated_at.date():
+        for employee in active_employees:
+            if not employee.activated_at or current_date < employee.activated_at.date():
                 continue
-            log = attendance_map.get((sevak.id, current_date))
+            log = attendance_map.get((employee.id, current_date))
 
             # Check leave/weekoff status for this day
-            is_leave, is_week_off = get_day_leave_status(db, sevak.id, current_date, sevak.default_week_off)
+            is_leave, is_week_off = get_day_leave_status(db, employee.id, current_date, employee.default_week_off)
 
             if is_leave or is_week_off:
                 continue
@@ -595,9 +595,9 @@ def get_non_compliant_attendance(db: Session, start_date: date, end_date: date) 
             if not log:
                 # No attendance marked - ABSENT
                 results.append({
-                    'sevak_db_id': sevak.id,
-                    'sevak_id': sevak.sevak_id,
-                    'sevak_name': f"{sevak.first_name} {sevak.last_name}",
+                    'employee_db_id': employee.id,
+                    'employee_id': employee.employee_id,
+                    'employee_name': f"{employee.first_name} {employee.last_name}",
                     'date': current_date.strftime('%Y-%m-%d'),
                     'day': current_date.strftime('%A'),
                     'status': 'ABSENT',
@@ -608,9 +608,9 @@ def get_non_compliant_attendance(db: Session, start_date: date, end_date: date) 
                 })
             elif log.status == AttendanceStatus.ABSENT:
                 results.append({
-                    'sevak_db_id': sevak.id,
-                    'sevak_id': sevak.sevak_id,
-                    'sevak_name': f"{sevak.first_name} {sevak.last_name}",
+                    'employee_db_id': employee.id,
+                    'employee_id': employee.employee_id,
+                    'employee_name': f"{employee.first_name} {employee.last_name}",
                     'date': current_date.strftime('%Y-%m-%d'),
                     'day': current_date.strftime('%A'),
                     'status': 'ABSENT',
@@ -619,12 +619,12 @@ def get_non_compliant_attendance(db: Session, start_date: date, end_date: date) 
                     'distance': None,
                     'remarks': 'Marked as absent'
                 })
-            elif is_attendance_log_geo_mismatch(db, sevak, log):
+            elif is_attendance_log_geo_mismatch(db, employee, log):
                 distance_str = f"{log.location_lat:.6f}, {log.location_lng:.6f}" if log.location_lat else 'N/A'
                 results.append({
-                    'sevak_db_id': sevak.id,
-                    'sevak_id': sevak.sevak_id,
-                    'sevak_name': f"{sevak.first_name} {sevak.last_name}",
+                    'employee_db_id': employee.id,
+                    'employee_id': employee.employee_id,
+                    'employee_name': f"{employee.first_name} {employee.last_name}",
                     'date': current_date.strftime('%Y-%m-%d'),
                     'day': current_date.strftime('%A'),
                     'status': log.status.value if hasattr(log.status, 'value') else log.status,
@@ -638,7 +638,7 @@ def get_non_compliant_attendance(db: Session, start_date: date, end_date: date) 
     return results
 
 def get_monthly_aggregated_report(db: Session, year: int, month: int) -> list:
-    """Get aggregated monthly stats (Working Days, Week Offs, Leaves, Attendance) per Sevak."""
+    """Get aggregated monthly stats (Working Days, Week Offs, Leaves, Attendance) per Employee."""
     import calendar
     from app.models.department import Department
 
@@ -647,9 +647,9 @@ def get_monthly_aggregated_report(db: Session, year: int, month: int) -> list:
     end_date = date(year, month, last_day)
     total_days_in_month = last_day
 
-    active_sevaks = db.query(Sevak).filter(
-        Sevak.status == SevakStatusEnum.ACTIVE,
-        Sevak.role.in_(TRACKED_ATTENDANCE_ROLES),
+    active_employees = db.query(Employee).filter(
+        Employee.status == EmployeeStatusEnum.ACTIVE,
+        Employee.role.in_(TRACKED_ATTENDANCE_ROLES),
     ).all()
     departments = {d.id: d.name for d in db.query(Department).all()}
 
@@ -671,14 +671,14 @@ def get_monthly_aggregated_report(db: Session, year: int, month: int) -> list:
 
     results = []
 
-    for sevak in active_sevaks:
-        s_logs = [log for log in attendance_logs if log.sevak_id == sevak.id]
-        s_leaves = [lr for lr in leave_requests if lr[0].sevak_id == sevak.id]
+    for employee in active_employees:
+        s_logs = [log for log in attendance_logs if log.employee_id == employee.id]
+        s_leaves = [lr for lr in leave_requests if lr[0].employee_id == employee.id]
 
         # Attendance logs are the source of truth; geo status is recalculated from stored coordinates
         # so reports match the attendance calendar when location rules change after a log was created.
         geo_mismatch_by_log_id = {
-            log.id: is_attendance_log_geo_mismatch(db, sevak, log)
+            log.id: is_attendance_log_geo_mismatch(db, employee, log)
             for log in s_logs
         }
         present_count = sum(
@@ -697,12 +697,12 @@ def get_monthly_aggregated_report(db: Session, year: int, month: int) -> list:
         active_days_in_period = 0
         current_date = start_date
         while current_date <= end_date:
-            if not sevak.activated_at or current_date < sevak.activated_at.date():
+            if not employee.activated_at or current_date < employee.activated_at.date():
                 current_date += timedelta(days=1)
                 continue
 
             active_days_in_period += 1
-            is_leave, is_week_off = get_day_leave_status(db, sevak.id, current_date, sevak.default_week_off)
+            is_leave, is_week_off = get_day_leave_status(db, employee.id, current_date, employee.default_week_off)
 
             if is_week_off:
                 week_off_count += 1
@@ -722,10 +722,10 @@ def get_monthly_aggregated_report(db: Session, year: int, month: int) -> list:
             current_date += timedelta(days=1)
 
         results.append({
-            'sevak_db_id': sevak.id,
-            'sevak_id': sevak.sevak_id,
-            'name': f"{sevak.first_name} {sevak.last_name}",
-            'department_name': departments.get(sevak.department_id, 'Unassigned'),
+            'employee_db_id': employee.id,
+            'employee_id': employee.employee_id,
+            'name': f"{employee.first_name} {employee.last_name}",
+            'department_name': departments.get(employee.department_id, 'Unassigned'),
             'total_days': active_days_in_period,
             'working_days': active_days_in_period - week_off_count,
             'week_off': week_off_count,
@@ -887,7 +887,7 @@ def get_non_compliant_summary(db: Session, start_date: date, end_date: date) -> 
     missed_attendance = sum(row['absent_days'] for row in monthly_rows)
     geo_mismatch = sum(row['geo_mismatch'] for row in monthly_rows)
     total_records = missed_attendance + geo_mismatch
-    unique_sevaks = sum(
+    unique_employees = sum(
         1 for row in monthly_rows
         if row['absent_days'] > 0 or row['geo_mismatch'] > 0
     )
@@ -896,6 +896,6 @@ def get_non_compliant_summary(db: Session, start_date: date, end_date: date) -> 
         'total_records': total_records,
         'missed_attendance': missed_attendance,
         'geo_mismatch': geo_mismatch,
-        'unique_sevaks': unique_sevaks,
+        'unique_employees': unique_employees,
         'period': f"{start_date.strftime('%d-%b-%Y')} to {end_date.strftime('%d-%b-%Y')}"
     }

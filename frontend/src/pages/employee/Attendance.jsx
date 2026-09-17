@@ -241,7 +241,7 @@ const buildAttendanceCalendarEntries = ({
       if (dateStr < activationDateStr) continue;
       entries[dateStr] = {
         id: `leave-${dateStr}`,
-        sevak_id: history[0]?.sevak_id || null,
+        employee_id: history[0]?.employee_id || null,
         date: dateStr,
         check_in_time: null,
         check_out_time: null,
@@ -263,7 +263,7 @@ const buildAttendanceCalendarEntries = ({
       if (dateStr < activationDateStr) continue;
       entries[dateStr] = {
         id: `week-off-${dateStr}`,
-        sevak_id: history[0]?.sevak_id || null,
+        employee_id: history[0]?.employee_id || null,
         date: dateStr,
         check_in_time: null,
         check_out_time: null,
@@ -282,7 +282,7 @@ const buildAttendanceCalendarEntries = ({
       }
       entries[dateStr] = {
         id: `absent-${dateStr}`,
-        sevak_id: history[0]?.sevak_id || null,
+        employee_id: history[0]?.employee_id || null,
         date: dateStr,
         check_in_time: null,
         check_out_time: null,
@@ -439,7 +439,7 @@ export default function Attendance() {
     ? history.find(h => getIsoDate(h.date) === todayIso)
     : null;
   const isMarkedToday = !!todayLog;
-  const ownLeaveRequests = leaveRequests.filter(r => r.sevak_id === user?.id);
+  const ownLeaveRequests = leaveRequests.filter(r => r.employee_id === user?.id);
   const derivedHistory = buildAttendanceCalendarEntries({
     year: viewDate.getFullYear(),
     month: viewDate.getMonth(),

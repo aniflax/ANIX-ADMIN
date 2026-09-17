@@ -26,14 +26,14 @@ from app.api import attendance as attendance_api
 from app.api import auth as auth_api
 from app.api import config as config_api
 from app.api import onboarding as onboarding_api
-from app.api import sevak as sevak_api
-from app.core.dependencies import get_current_sevak, get_db
+from app.api import employee as employee_api
+from app.core.dependencies import get_current_employee, get_db
 from app.core.database import Base
 from app.core.security import hash_password
 from app.models.attendance import AttendanceLog
 from app.models.department import ConfigAccessLevel, Department, SystemConfig
 from app.models.leave import LeaveRequest, LeaveRequestStatus, LeaveType
-from app.models.sevak import RoleEnum, Sevak, SevakStatusEnum
+from app.models.employee import RoleEnum, Employee, EmployeeStatusEnum
 
 
 @pytest.fixture()
@@ -54,15 +54,15 @@ def db_session():
         engine.dispose()
 
 
-def _create_sevak(
+def _create_employee(
     db,
     *,
-    sevak_id: int = 10006,
+    employee_id: int = 10006,
     first_name: str = "Test",
     last_name: str = "User",
     email: str = "test.user@example.com",
-    role: RoleEnum = RoleEnum.SEVAK,
-    status: SevakStatusEnum = SevakStatusEnum.ACTIVE,
+    role: RoleEnum = RoleEnum.EMPLOYEE,
+    status: EmployeeStatusEnum = EmployeeStatusEnum.ACTIVE,
     email_verified: bool = False,
     is_active: bool = True,
     default_week_off: str = "Sunday",
@@ -70,9 +70,9 @@ def _create_sevak(
     department_id: str | None = None,
     activated_at: datetime | None = datetime(2026, 1, 1, 9, 0),
 ):
-    sevak = Sevak(
+    employee = Employee(
         id=str(uuid.uuid4()),
-        sevak_id=sevak_id,
+        employee_id=employee_id,
         first_name=first_name,
         last_name=last_name,
         email=email,
@@ -85,10 +85,10 @@ def _create_sevak(
         department_id=department_id,
         activated_at=activated_at,
     )
-    db.add(sevak)
+    db.add(employee)
     db.commit()
-    db.refresh(sevak)
-    return sevak
+    db.refresh(employee)
+    return employee
 
 
 def _create_department(db, *, name: str = "Operations"):
@@ -120,7 +120,7 @@ def _create_leave_type(db, *, name: str = "Casual Leave", annual_quota: int = 12
 def _create_leave_request(
     db,
     *,
-    sevak_id: str,
+    employee_id: str,
     leave_type_id: str,
     start_date,
     end_date,
@@ -129,7 +129,7 @@ def _create_leave_request(
 ):
     leave_request = LeaveRequest(
         id=str(uuid.uuid4()),
-        sevak_id=sevak_id,
+        employee_id=employee_id,
         leave_type_id=leave_type_id,
         start_date=start_date,
         end_date=end_date,
@@ -143,10 +143,10 @@ def _create_leave_request(
     return leave_request
 
 
-def _create_attendance_log(db, *, sevak_id: str, day, status="PRESENT"):
+def _create_attendance_log(db, *, employee_id: str, day, status="PRESENT"):
     log = AttendanceLog(
         id=str(uuid.uuid4()),
-        sevak_id=sevak_id,
+        employee_id=employee_id,
         date=day,
         status=status,
     )
@@ -171,8 +171,8 @@ def _create_config(db, *, key: str, value: str, description: str = "", access_le
 
 
 @pytest.fixture()
-def make_sevak(db_session):
-    return lambda **kwargs: _create_sevak(db_session, **kwargs)
+def make_employee(db_session):
+    return lambda **kwargs: _create_employee(db_session, **kwargs)
 
 
 @pytest.fixture()
@@ -206,7 +206,7 @@ def api_client_factory(db_session):
     app.include_router(auth_api.router)
     app.include_router(config_api.router)
     app.include_router(attendance_api.router)
-    app.include_router(sevak_api.router)
+    app.include_router(employee_api.router)
     app.include_router(onboarding_api.router)
 
     def override_get_db():
@@ -218,7 +218,7 @@ def api_client_factory(db_session):
     app.dependency_overrides[get_db] = override_get_db
 
     def factory(current_user):
-        app.dependency_overrides[get_current_sevak] = lambda: current_user
+        app.dependency_overrides[get_current_employee] = lambda: current_user
         return TestClient(app)
 
     return factory

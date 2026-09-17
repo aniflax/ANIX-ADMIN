@@ -5,7 +5,7 @@ import { Box, Typography, Alert } from '@mui/material';
  * Catches render-time errors in its children and renders a safe fallback
  * instead of blanking the whole page. Used to wrap the shared month
  * calendar so a regression in the calendar cannot make the Calendar
- * History tab (sevak) or the Leave Summary (HOD directory view)
+ * History tab (employee) or the Leave Summary (HOD directory view)
  * inaccessible.
  */
 export default class CalendarErrorBoundary extends React.Component {

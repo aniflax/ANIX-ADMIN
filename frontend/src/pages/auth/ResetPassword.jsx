@@ -12,7 +12,7 @@ export default function ResetPassword() {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const token = searchParams.get('token');
-  const sevakId = searchParams.get('id');
+  const employeeId = searchParams.get('id');
 
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -39,7 +39,7 @@ export default function ResetPassword() {
 
   useEffect(() => {
     const validateLink = async () => {
-      if (!token || !sevakId) {
+      if (!token || !employeeId) {
         setError('Invalid reset link.');
         setCheckingLink(false);
         return;
@@ -53,7 +53,7 @@ export default function ResetPassword() {
       try {
         await api.post('/api/auth/reset-password-validate', {
           token,
-          sevak_id: sevakId
+          employee_id: employeeId
         });
         setLinkValid(true);
       } catch (err) {
@@ -64,7 +64,7 @@ export default function ResetPassword() {
     };
 
     validateLink();
-  }, [token, sevakId]);
+  }, [token, employeeId]);
 
   useEffect(() => {
     if (!expiresAt) return;
@@ -106,7 +106,7 @@ export default function ResetPassword() {
     try {
       await api.post('/api/auth/reset-password-confirm', {
         token: token,
-        sevak_id: sevakId,
+        employee_id: employeeId,
         new_password: password
       });
       setSuccess(true);

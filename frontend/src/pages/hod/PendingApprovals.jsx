@@ -21,7 +21,7 @@ const HALF_DAY_PERIOD_LABELS = {
 
 export default function PendingApprovals() {
   const [allRequests, setAllRequests] = useState([]);
-  const [sevaks, setSevaks] = useState([]);
+  const [employees, setEmployees] = useState([]);
   const [departments, setDepartments] = useState([]);
   const [leaveTypes, setLeaveTypes] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -40,7 +40,7 @@ export default function PendingApprovals() {
   const [searchParams, setSearchParams] = useSearchParams();
   const { user } = useAuth();
   const highlightId = location.state?.highlightRequestId || searchParams.get('highlight');
-  const highlightSevakId = location.state?.sevakId;
+  const highlightEmployeeId = location.state?.employeeId;
   const redirectCategory = location.state?.category;
   const rowRefs = useRef({});
 
@@ -48,12 +48,12 @@ export default function PendingApprovals() {
     try {
       const [reqRes, sevRes, deptRes, typeRes] = await Promise.all([
         api.get('/api/leave/requests'),
-        api.get('/api/sevaks/'),
+        api.get('/api/employees/'),
         api.get('/api/departments/').catch(() => ({ data: [] })),
         api.get('/api/leave/types').catch(() => ({ data: [] })),
       ]);
       setAllRequests(reqRes.data);
-      setSevaks(sevRes.data);
+      setEmployees(sevRes.data);
       setDepartments(Array.isArray(deptRes.data) ? deptRes.data : []);
       setLeaveTypes(Array.isArray(typeRes.data) ? typeRes.data : []);
     } catch (err) { console.error(err); }
@@ -105,21 +105,21 @@ export default function PendingApprovals() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [highlightId, allRequests]);
 
-  const getSevak = (id) => sevaks.find(s => s.id === id);
+  const getEmployee = (id) => employees.find(s => s.id === id);
   const getDept = (id) => departments.find(d => d.id === id);
 
   const applyRequestFilters = (reqs, currentTab) => reqs.filter(r => {
     // HOD's own leave requests must never appear in Leave Approvals — HODs
     // approve leave for their team, not for themselves.
-    if (r.sevak_id === user?.id) return false;
-    if (highlightSevakId && r.sevak_id !== highlightSevakId) return false;
-    const sv = getSevak(r.sevak_id);
+    if (r.employee_id === user?.id) return false;
+    if (highlightEmployeeId && r.employee_id !== highlightEmployeeId) return false;
+    const sv = getEmployee(r.employee_id);
     const searchLower = search.toLowerCase();
     const matchSearch = !search
       || (sv && (
         sv.first_name?.toLowerCase().includes(searchLower)
         || sv.last_name?.toLowerCase().includes(searchLower)
-        || String(sv.sevak_id || '').includes(search)
+        || String(sv.employee_id || '').includes(search)
       ));
     // Leave Category filter only applies on the All Requests tab — the
     // Pending Approval tab has no category filter.
@@ -169,7 +169,7 @@ export default function PendingApprovals() {
       <Table size="small">
         <TableHead sx={{ bgcolor: 'grey.50' }}>
           <TableRow>
-            <TableCell><b>Sevak Name</b></TableCell>
+            <TableCell><b>Employee Name</b></TableCell>
             <TableCell><b>Department</b></TableCell>
             <TableCell><b>Leave Type</b></TableCell>
             <TableCell><b>Start</b></TableCell>
@@ -182,7 +182,7 @@ export default function PendingApprovals() {
         </TableHead>
         <TableBody>
           {reqs.map(req => {
-            const sv = getSevak(req.sevak_id);
+            const sv = getEmployee(req.employee_id);
             const dept = getDept(sv?.department_id);
             const isHighlighted = highlightId && req.id === highlightId;
             return (
@@ -200,7 +200,7 @@ export default function PendingApprovals() {
                   <Typography variant="body2" fontWeight="bold">
                     {sv ? `${sv.first_name} ${sv.last_name}` : 'Unknown'}
                   </Typography>
-                  <Typography variant="caption" color="text.secondary">#{sv?.sevak_id}</Typography>
+                  <Typography variant="caption" color="text.secondary">#{sv?.employee_id}</Typography>
                 </TableCell>
                 <TableCell>{dept?.name || '—'}</TableCell>
                 <TableCell>{req.leave_type_name || req.leave_type_id?.substring(0, 8)}</TableCell>
@@ -316,7 +316,7 @@ export default function PendingApprovals() {
         open={!!dialogRequest}
         request={dialogRequest}
         viewer={user?.role || 'HOD'}
-        sevaks={sevaks}
+        employees={employees}
         departments={departments}
         readOnly={tab !== 0}
         onClose={() => {

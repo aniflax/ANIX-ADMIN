@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.core.config import settings
-from app.api import auth, sevak, leave, attendance, onboarding, department, dashboard, config, location, communications
+from app.api import auth, employee, leave, attendance, onboarding, department, dashboard, config, location, communications
 from fastapi.staticfiles import StaticFiles
 import os
 from app.core.database import SessionLocal
@@ -42,7 +42,7 @@ app.add_middleware(
 
 # Register routers
 app.include_router(auth.router)
-app.include_router(sevak.router)
+app.include_router(employee.router)
 app.include_router(leave.router)
 app.include_router(attendance.router)
 app.include_router(onboarding.router)

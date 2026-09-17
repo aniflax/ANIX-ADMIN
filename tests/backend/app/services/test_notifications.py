@@ -4,7 +4,7 @@ from types import SimpleNamespace
 from app.models.attendance import AttendanceLog, AttendanceSource, AttendanceStatus
 from app.models.department import ConfigAccessLevel, SystemConfig
 from app.models.leave import LeaveRequest, LeaveRequestStatus, LeaveType
-from app.models.sevak import SevakStatusEnum
+from app.models.employee import EmployeeStatusEnum
 from app.services import attendance as attendance_service
 from app.services.notifications import (
     _send_message,
@@ -16,14 +16,14 @@ from app.services.notifications import (
 )
 
 
-def test_password_reset_uses_configured_validity_window(db_session, make_config, make_sevak, monkeypatch):
+def test_password_reset_uses_configured_validity_window(db_session, make_config, make_employee, monkeypatch):
     make_config(
         key="PASSWORD_RESET_LINK_VALIDITY_MINUTES",
         value="15",
         description="Password reset link validity",
         access_level=ConfigAccessLevel.SUPER_ADMIN,
     )
-    sevak = make_sevak(email="sevak@example.com", email_verified=True)
+    employee = make_employee(email="employee@example.com", email_verified=True)
 
     captured = {}
 
@@ -35,7 +35,7 @@ def test_password_reset_uses_configured_validity_window(db_session, make_config,
     monkeypatch.setattr("app.services.notifications.create_access_token", fake_create_access_token)
     monkeypatch.setattr("app.services.notifications.send_password_reset_email", lambda **kwargs: True)
 
-    assert create_password_reset_notification(db_session, sevak) is True
+    assert create_password_reset_notification(db_session, employee) is True
     assert captured["purpose"] == "reset_password"
     assert captured["expires_delta"] == timedelta(minutes=15)
 
@@ -43,20 +43,20 @@ def test_password_reset_uses_configured_validity_window(db_session, make_config,
     assert reset_request.value == "15"
 
 
-def test_process_attendance_reminders_includes_locked_but_active_users(db_session, make_sevak, monkeypatch):
-    locked = make_sevak(
-        sevak_id=10006,
-        email="sevak@example.com",
+def test_process_attendance_reminders_includes_locked_but_active_users(db_session, make_employee, monkeypatch):
+    locked = make_employee(
+        employee_id=10006,
+        email="employee@example.com",
         email_verified=True,
-        status=SevakStatusEnum.LOCKED,
+        status=EmployeeStatusEnum.LOCKED,
     )
-    active = make_sevak(
-        sevak_id=10007,
+    active = make_employee(
+        employee_id=10007,
         email="present@example.com",
         email_verified=True,
     )
-    inactive = make_sevak(
-        sevak_id=10008,
+    inactive = make_employee(
+        employee_id=10008,
         email="inactive@example.com",
         email_verified=True,
         is_active=False,
@@ -66,7 +66,7 @@ def test_process_attendance_reminders_includes_locked_but_active_users(db_sessio
     db_session.add(
         AttendanceLog(
             id="att-1",
-            sevak_id=active.id,
+            employee_id=active.id,
             date=today,
             status=AttendanceStatus.PRESENT,
             source=AttendanceSource.WEB,
@@ -85,7 +85,7 @@ def test_process_attendance_reminders_includes_locked_but_active_users(db_sessio
     db_session.add(
         LeaveRequest(
             id="leave-1",
-            sevak_id=inactive.id,
+            employee_id=inactive.id,
             leave_type_id=leave_type.id,
             start_date=today,
             end_date=today,
@@ -97,7 +97,7 @@ def test_process_attendance_reminders_includes_locked_but_active_users(db_sessio
     db_session.commit()
 
     monkeypatch.setattr(attendance_service, "get_local_today", lambda: today)
-    pending = attendance_service.get_sevaks_without_attendance_today(db_session)
+    pending = attendance_service.get_employees_without_attendance_today(db_session)
     pending_ids = {item.id for item in pending}
     assert locked.id in pending_ids
     assert active.id not in pending_ids
@@ -112,7 +112,7 @@ def test_process_attendance_reminders_includes_locked_but_active_users(db_sessio
     monkeypatch.setattr(attendance_service, "get_attendance_deadline", lambda db: "10:30")
     monkeypatch.setattr(attendance_service, "get_local_today", lambda: today)
     monkeypatch.setattr(attendance_service, "get_local_now", lambda: datetime(2026, 4, 21, 11, 0))
-    monkeypatch.setattr(attendance_service, "get_sevaks_without_attendance_today", lambda db: [locked])
+    monkeypatch.setattr(attendance_service, "get_employees_without_attendance_today", lambda db: [locked])
     monkeypatch.setattr("app.services.notifications.send_attendance_reminder_email", lambda *args, **kwargs: True)
     monkeypatch.setattr("app.services.notifications.mark_attendance_reminder_sent", lambda *args, **kwargs: None)
 
@@ -189,8 +189,8 @@ def test_send_message_returns_false_when_brevo_key_missing(monkeypatch):
     assert _send_message(message, db=None) is False
 
 
-def test_activation_email_contains_mobile_accessible_full_link(db_session, make_sevak, monkeypatch):
-    sevak = make_sevak(email="mobile@example.com", email_verified=False)
+def test_activation_email_contains_mobile_accessible_full_link(db_session, make_employee, monkeypatch):
+    employee = make_employee(email="mobile@example.com", email_verified=False)
     captured = {}
 
     monkeypatch.setattr("app.services.notifications.create_access_token", lambda **kwargs: "activation-token")
@@ -201,17 +201,17 @@ def test_activation_email_contains_mobile_accessible_full_link(db_session, make_
 
     monkeypatch.setattr("app.services.notifications._send_message", capture_message)
 
-    assert send_account_activation_email(db_session, sevak, requested_by_name="Test") is True
+    assert send_account_activation_email(db_session, employee, requested_by_name="Test") is True
 
     message = captured["message"]
-    expected_link = f"http://192.168.1.10:5173/activate-account?token=activation-token&id={sevak.id}"
+    expected_link = f"http://192.168.1.10:5173/activate-account?token=activation-token&id={employee.id}"
     assert expected_link in message.get_payload(0).get_payload()
     assert expected_link in message.get_payload(1).get_payload()
     assert "Activate Account" in message.get_payload(1).get_payload()
 
 
-def test_activation_email_prefers_request_frontend_url(db_session, make_sevak, monkeypatch):
-    sevak = make_sevak(email="phone-origin@example.com", email_verified=False)
+def test_activation_email_prefers_request_frontend_url(db_session, make_employee, monkeypatch):
+    employee = make_employee(email="phone-origin@example.com", email_verified=False)
     captured = {}
 
     monkeypatch.setattr("app.services.notifications.create_access_token", lambda **kwargs: "activation-token")
@@ -225,19 +225,19 @@ def test_activation_email_prefers_request_frontend_url(db_session, make_sevak, m
 
     assert send_account_activation_email(
         db_session,
-        sevak,
+        employee,
         requested_by_name="Mobile Onboarding",
         frontend_url="http://192.168.1.10:5173",
     ) is True
 
     message = captured["message"]
-    expected_link = f"http://192.168.1.10:5173/activate-account?token=activation-token&id={sevak.id}"
+    expected_link = f"http://192.168.1.10:5173/activate-account?token=activation-token&id={employee.id}"
     assert expected_link in message.get_payload(0).get_payload()
     assert "http://localhost:5173/activate-account" not in message.get_payload(0).get_payload()
 
 
-def test_activation_email_rewrites_localhost_to_lan_for_mobile(db_session, make_sevak, monkeypatch):
-    sevak = make_sevak(email="lan-fallback@example.com", email_verified=False)
+def test_activation_email_rewrites_localhost_to_lan_for_mobile(db_session, make_employee, monkeypatch):
+    employee = make_employee(email="lan-fallback@example.com", email_verified=False)
     captured = {}
 
     monkeypatch.setattr("app.services.notifications.create_access_token", lambda **kwargs: "activation-token")
@@ -250,7 +250,7 @@ def test_activation_email_rewrites_localhost_to_lan_for_mobile(db_session, make_
 
     monkeypatch.setattr("app.services.notifications._send_message", capture_message)
 
-    assert send_account_activation_email(db_session, sevak, requested_by_name="Desktop Resend") is True
+    assert send_account_activation_email(db_session, employee, requested_by_name="Desktop Resend") is True
 
-    expected_link = f"http://192.168.1.25:5173/activate-account?token=activation-token&id={sevak.id}"
+    expected_link = f"http://192.168.1.25:5173/activate-account?token=activation-token&id={employee.id}"
     assert expected_link in captured["message"].get_payload(0).get_payload()

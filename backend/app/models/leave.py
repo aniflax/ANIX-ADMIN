@@ -29,7 +29,7 @@ class LeaveBalance(Base):
     __tablename__ = "leave_balances"
     
     id: Mapped[str] = mapped_column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
-    sevak_id: Mapped[str] = mapped_column(String(36), ForeignKey("sevaks.id"), nullable=False)
+    employee_id: Mapped[str] = mapped_column(String(36), ForeignKey("employees.id"), nullable=False)
     leave_type_id: Mapped[str] = mapped_column(String(36), ForeignKey("leave_types.id"), nullable=False)
     year: Mapped[int] = mapped_column(Integer, nullable=False)
     total_allocated: Mapped[float] = mapped_column(Float, default=0.0)
@@ -42,7 +42,7 @@ class LeaveRequest(Base):
     __tablename__ = "leave_requests"
     
     id: Mapped[str] = mapped_column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
-    sevak_id: Mapped[str] = mapped_column(String(36), ForeignKey("sevaks.id"), nullable=False)
+    employee_id: Mapped[str] = mapped_column(String(36), ForeignKey("employees.id"), nullable=False)
     leave_type_id: Mapped[str] = mapped_column(String(36), ForeignKey("leave_types.id"), nullable=False)
     start_date: Mapped[date] = mapped_column(Date, nullable=False)
     end_date: Mapped[date] = mapped_column(Date, nullable=False)
@@ -54,8 +54,8 @@ class LeaveRequest(Base):
         SAEnum(LeaveRequestStatus), nullable=False, default=LeaveRequestStatus.PENDING
     )
     hod_skipped: Mapped[bool] = mapped_column(Boolean, default=False)
-    approver_hod_id: Mapped[str] = mapped_column(String(36), ForeignKey("sevaks.id"), nullable=True)
-    approver_hr_id: Mapped[str] = mapped_column(String(36), ForeignKey("sevaks.id"), nullable=True)
+    approver_hod_id: Mapped[str] = mapped_column(String(36), ForeignKey("employees.id"), nullable=True)
+    approver_hr_id: Mapped[str] = mapped_column(String(36), ForeignKey("employees.id"), nullable=True)
     rejection_reason: Mapped[str] = mapped_column(Text, nullable=True)
     cancel_comment: Mapped[str] = mapped_column(Text, nullable=True)
     last_notified_at: Mapped[datetime] = mapped_column(DateTime, nullable=True)

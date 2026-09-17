@@ -33,15 +33,15 @@ python -m app.main
 
 ## Changes Applied
 
-### ✅ Progress Bar (SevakDirectoryRecordView.jsx)
+### ✅ Progress Bar (EmployeeDirectoryRecordView.jsx)
 - **Line 328-329**: Added `width: '100%'` and `gap: 0`
 - **Line 374**: Changed `mx: -0.5` → `mx: 0`
 - **Expected**: Progress bar should span full width
 
 ### ✅ Remove Button (Departments.jsx)
-- **Function deactivateSevak**: Changed from deactivate to remove from department
+- **Function deactivateEmployee**: Changed from deactivate to remove from department
 - **Button**: Changed text from "Deactivate" → "Remove"
-- **Action**: Sets `department_id = null` and downgrades to SEVAK if needed
+- **Action**: Sets `department_id = null` and downgrades to EMPLOYEE if needed
 
 ### ✅ HOD Badge
 - **Lines 502-507**: Chip badge displays when `viewDept?.hod_id === s.id`
@@ -61,8 +61,8 @@ After applying fixes:
 [ ] Progress bar spans full width (edge to edge)
 [ ] HOD Badge shows red chip next to department head
 [ ] "Remove" button appears instead of "Deactivate" 
-[ ] Clicking Remove removes sevak from department
-[ ] Allocated sevaks dropdown shows only unassigned
+[ ] Clicking Remove removes employee from department
+[ ] Allocated employees dropdown shows only unassigned
 [ ] Dropdown updates immediately after removal
 ```
 

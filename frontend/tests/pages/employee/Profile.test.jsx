@@ -1,9 +1,9 @@
 import React from 'react';
 import { render, screen } from '@testing-library/react';
 import { vi } from 'vitest';
-import Profile from '../../../src/pages/sevak/Profile.jsx';
+import Profile from '../../../src/pages/employee/Profile.jsx';
 
-let params = { id: 'sevak-1' };
+let params = { id: 'employee-1' };
 const navigate = vi.fn();
 
 const { apiGet, apiPut, apiPost } = vi.hoisted(() => ({
@@ -22,7 +22,7 @@ vi.mock('../../../src/api/axios', () => ({
 }));
 
 vi.mock('../../../src/context/AuthContext', () => ({
-  useAuth: () => ({ user: { id: 'sevak-1', role: 'SEVAK' } }),
+  useAuth: () => ({ user: { id: 'employee-1', role: 'EMPLOYEE' } }),
 }));
 
 vi.mock('react-router-dom', async () => {
@@ -37,22 +37,22 @@ vi.mock('react-router-dom', async () => {
 
 describe('Profile', () => {
   beforeEach(() => {
-    params = { id: 'sevak-1' };
+    params = { id: 'employee-1' };
     apiGet.mockImplementation((url) => {
-      if (url === '/api/sevaks/sevak-1') {
+      if (url === '/api/employees/employee-1') {
         return Promise.resolve({
           data: {
-            id: 'sevak-1',
-            sevak_id: 10006,
+            id: 'employee-1',
+            employee_id: 10006,
             first_name: 'Teja',
             last_name: 'Krishna',
-            email: 'sevak@example.com',
+            email: 'employee@example.com',
             email_verified: true,
             phone: '9999999999',
             address: 'Hyderabad',
             department_id: 'dept-1',
             default_week_off: 'Sunday',
-            role: 'SEVAK',
+            role: 'EMPLOYEE',
             id_proof_path: null,
             pan_card_path: null,
             passbook_path: null,
@@ -75,6 +75,6 @@ describe('Profile', () => {
 
     expect(await screen.findByText(/Personal Details/i)).toBeInTheDocument();
     expect(screen.getByTitle('Email verified')).toBeInTheDocument();
-    expect(screen.getByText('sevak@example.com')).toBeInTheDocument();
+    expect(screen.getByText('employee@example.com')).toBeInTheDocument();
   });
 });

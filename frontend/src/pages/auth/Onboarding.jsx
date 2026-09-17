@@ -277,7 +277,7 @@ export default function Onboarding() {
         headers: { 'Content-Type': undefined },
       });
       sessionStorage.removeItem(ONBOARDING_DRAFT_KEY);
-      setSuccess(response.data.message || `Account created successfully! Please check your email and click the activation link to activate your account and receive your Sevak ID.`);
+      setSuccess(response.data.message || `Account created successfully! Please check your email and click the activation link to activate your account and receive your Employee ID.`);
     } catch (err) {
       const detail = err.response?.data?.detail;
       const errorMessage = Array.isArray(detail)
@@ -900,7 +900,7 @@ export default function Onboarding() {
       <Paper sx={{ p: { xs: 3, md: 3 }, borderRadius: 2, boxShadow: 3 }}>
         <Box textAlign="center" mb={3}>
           <Typography variant="h3" fontWeight="bold" color="primary" gutterBottom>
-            Sevak Onboarding
+            Employee Onboarding
           </Typography>
           <Typography variant="body1" color="text.secondary">
             Join the anix community. Please provide your details and mandatory documents.

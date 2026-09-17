@@ -7,7 +7,7 @@ from typing import Iterable, List, Optional
 from fastapi import HTTPException
 from sqlalchemy.orm import Session
 
-from app.models.sevak import RoleEnum, Sevak, SevakStatusEnum
+from app.models.employee import RoleEnum, Employee, EmployeeStatusEnum
 from app.services.notifications import send_bulk_communication_email
 
 logger = logging.getLogger(__name__)
@@ -16,12 +16,12 @@ BULK_MODES = {"all", "department", "role", "custom"}
 
 
 def _base_query(db: Session):
-    return db.query(Sevak).filter(
-        Sevak.is_active.is_(True),
-        Sevak.status == SevakStatusEnum.ACTIVE,
-        Sevak.email.isnot(None),
-        Sevak.email != "",
-        Sevak.email_verified.is_(True),
+    return db.query(Employee).filter(
+        Employee.is_active.is_(True),
+        Employee.status == EmployeeStatusEnum.ACTIVE,
+        Employee.email.isnot(None),
+        Employee.email != "",
+        Employee.email_verified.is_(True),
     )
 
 
@@ -33,12 +33,12 @@ def resolve_bulk_recipients(
     roles: Optional[List[str]] = None,
     include_ids: Optional[List[str]] = None,
     exclude_ids: Optional[List[str]] = None,
-) -> List[Sevak]:
+) -> List[Employee]:
     """Resolve recipient accounts for a bulk communication.
 
     Semantics (Custom mode):
-      base = all active sevaks (SEVAK + HOD) with verified email
-      if include_ids is non-empty: restrict to those sevaks
+      base = all active employees (EMPLOYEE + HOD) with verified email
+      if include_ids is non-empty: restrict to those employees
       always subtract exclude_ids
 
     For other modes the candidate set is the union of the selected
@@ -54,7 +54,7 @@ def resolve_bulk_recipients(
     elif mode == "department":
         if not department_id:
             raise HTTPException(status_code=400, detail="department_id is required for 'department' mode.")
-        candidates = base.filter(Sevak.department_id == department_id).all()
+        candidates = base.filter(Employee.department_id == department_id).all()
     elif mode == "role":
         if not roles:
             raise HTTPException(status_code=400, detail="At least one role is required for 'role' mode.")
@@ -62,7 +62,7 @@ def resolve_bulk_recipients(
             role_enums = [RoleEnum(r) for r in roles]
         except ValueError as exc:
             raise HTTPException(status_code=400, detail=f"Invalid role value: {exc}") from exc
-        candidates = base.filter(Sevak.role.in_(role_enums)).all()
+        candidates = base.filter(Employee.role.in_(role_enums)).all()
     elif mode == "custom":
         candidates = base.all()
     else:
@@ -71,13 +71,13 @@ def resolve_bulk_recipients(
     include_set = set(include_ids or [])
     exclude_set = set(exclude_ids or [])
 
-    resolved: List[Sevak] = []
-    for sevak in candidates:
-        if include_set and sevak.id not in include_set:
+    resolved: List[Employee] = []
+    for employee in candidates:
+        if include_set and employee.id not in include_set:
             continue
-        if sevak.id in exclude_set:
+        if employee.id in exclude_set:
             continue
-        resolved.append(sevak)
+        resolved.append(employee)
 
     return resolved
 
@@ -85,7 +85,7 @@ def resolve_bulk_recipients(
 def send_bulk_communication(
     db: Session,
     *,
-    actor: Sevak,
+    actor: Employee,
     mode: str,
     subject: str,
     body: str,
@@ -132,7 +132,7 @@ def send_bulk_communication(
 
     logger.info(
         "Bulk communication by %s mode=%s total=%d sent=%d failed=%d skipped=%d",
-        actor.sevak_id, mode, len(recipients), sent, failed, skipped_no_email,
+        actor.employee_id, mode, len(recipients), sent, failed, skipped_no_email,
     )
 
     return {

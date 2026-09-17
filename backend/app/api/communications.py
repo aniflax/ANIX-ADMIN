@@ -4,8 +4,8 @@ from typing import List, Optional
 from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel, Field
 
-from app.core.dependencies import DbSession, CurrentSevak
-from app.models.sevak import RoleEnum, Sevak, SevakStatusEnum
+from app.core.dependencies import DbSession, CurrentEmployee
+from app.models.employee import RoleEnum, Employee, EmployeeStatusEnum
 from app.services.communications import (
     BULK_MODES,
     resolve_bulk_recipients,
@@ -39,7 +39,7 @@ class BulkPreviewResponse(BaseModel):
     sample: List[dict]
 
 
-def _require_communicator(current_user: CurrentSevak) -> None:
+def _require_communicator(current_user: CurrentEmployee) -> None:
     if current_user.role not in (RoleEnum.HR, RoleEnum.ADMIN, RoleEnum.SUPER_ADMIN):
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
@@ -50,29 +50,29 @@ def _require_communicator(current_user: CurrentSevak) -> None:
 @router.get("/accounts")
 def list_communication_accounts(
     db: DbSession,
-    current_user: CurrentSevak,
+    current_user: CurrentEmployee,
 ):
     """Return all active accounts with a verified email so the sender can
-    build Include/Exclude lists. Includes SEVAK, HOD, HR, ADMIN and
+    build Include/Exclude lists. Includes EMPLOYEE, HOD, HR, ADMIN and
     SUPER_ADMIN — the official communication pool is not restricted to the
     directory view."""
     _require_communicator(current_user)
     rows = (
-        db.query(Sevak)
+        db.query(Employee)
         .filter(
-            Sevak.is_active.is_(True),
-            Sevak.status == SevakStatusEnum.ACTIVE,
-            Sevak.email.isnot(None),
-            Sevak.email != "",
-            Sevak.email_verified.is_(True),
+            Employee.is_active.is_(True),
+            Employee.status == EmployeeStatusEnum.ACTIVE,
+            Employee.email.isnot(None),
+            Employee.email != "",
+            Employee.email_verified.is_(True),
         )
-        .order_by(Sevak.first_name.asc(), Sevak.last_name.asc())
+        .order_by(Employee.first_name.asc(), Employee.last_name.asc())
         .all()
     )
     return [
         {
             "id": r.id,
-            "sevak_id": r.sevak_id,
+            "employee_id": r.employee_id,
             "first_name": r.first_name,
             "last_name": r.last_name,
             "email": r.email,
@@ -87,7 +87,7 @@ def list_communication_accounts(
 def preview_bulk_recipients(
     payload: BulkPreviewRequest,
     db: DbSession,
-    current_user: CurrentSevak,
+    current_user: CurrentEmployee,
 ):
     """Return the count and a small sample of recipients for the given selection
     so the sender can confirm before sending. Does NOT send any email."""
@@ -103,7 +103,7 @@ def preview_bulk_recipients(
     sample = [
         {
             "id": r.id,
-            "sevak_id": r.sevak_id,
+            "employee_id": r.employee_id,
             "first_name": r.first_name,
             "last_name": r.last_name,
             "email": r.email,
@@ -118,7 +118,7 @@ def preview_bulk_recipients(
 def send_bulk_communication_endpoint(
     payload: BulkCommunicationRequest,
     db: DbSession,
-    current_user: CurrentSevak,
+    current_user: CurrentEmployee,
 ):
     """Send an official email to the resolved recipients. Returns a delivery summary."""
     _require_communicator(current_user)

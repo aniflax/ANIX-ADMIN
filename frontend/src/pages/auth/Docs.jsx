@@ -9,15 +9,15 @@ import SupervisedUserCircleIcon from '@mui/icons-material/SupervisedUserCircle';
 import { useAuth } from '../../context/AuthContext';
 
 const roleHierarchy = {
-  SUPER_ADMIN: ['SUPER_ADMIN', 'ADMIN', 'HR', 'HOD', 'SEVAK'],
-  ADMIN: ['ADMIN', 'HR', 'HOD', 'SEVAK'],
-  HR: ['HR', 'HOD', 'SEVAK'],
-  HOD: ['HOD', 'SEVAK'],
-  SEVAK: ['SEVAK'],
+  SUPER_ADMIN: ['SUPER_ADMIN', 'ADMIN', 'HR', 'HOD', 'EMPLOYEE'],
+  ADMIN: ['ADMIN', 'HR', 'HOD', 'EMPLOYEE'],
+  HR: ['HR', 'HOD', 'EMPLOYEE'],
+  HOD: ['HOD', 'EMPLOYEE'],
+  EMPLOYEE: ['EMPLOYEE'],
 };
 
 const manuals = [
-  { title: 'Sevak User Manual', file: 'Sevak User Manual.html', icon: <BadgeIcon />, color: '#2e7d32', desc: 'Guide for Sevaks on attendance, leaves, profile, and swaps.', minRole: null },
+  { title: 'Employee User Manual', file: 'Employee User Manual.html', icon: <BadgeIcon />, color: '#2e7d32', desc: 'Guide for Employees on attendance, leaves, profile, and swaps.', minRole: null },
   { title: 'HOD User Manual', file: 'HOD User Manual.html', icon: <EngineeringIcon />, color: '#7b1fa2', desc: 'Guide for HODs on team management, approvals, and swaps.', minRole: 'HOD' },
   { title: 'HR User Manual', file: 'HR User Manual.html', icon: <SupportAgentIcon />, color: '#1565c0', desc: 'Guide for HR on directory, leave admin, departments, and notifications.', minRole: 'HR' },
   { title: 'Admin User Manual', file: 'Admin User Manual.html', icon: <AdminPanelSettingsIcon />, color: '#d66a18', desc: 'Guide for Admins on account management, departments, locations, and config.', minRole: 'ADMIN' },

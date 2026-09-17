@@ -19,15 +19,15 @@ export default function AttendanceReports() {
   const [loading, setLoading] = useState(true);
   const [allLogs, setAllLogs] = useState([]);
   const [mismatchLogs, setMismatchLogs] = useState([]);
-  const [sevakMap, setSevakMap] = useState({});
-  const [sevaks, setSevaks] = useState([]);
+  const [employeeMap, setEmployeeMap] = useState({});
+  const [employees, setEmployees] = useState([]);
 
   // Manual Update Dialog State
   const [openDialog, setOpenDialog] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
   const [formData, setFormData] = useState({
-    sevak_id: '',
+    employee_id: '',
     date: new Date().toISOString().split('T')[0],
     check_in_time: '',
     check_out_time: '',
@@ -37,21 +37,21 @@ export default function AttendanceReports() {
   const fetchAllData = async () => {
     setLoading(true);
     try {
-      const [allLogsRes, mismatchRes, sevaksRes] = await Promise.all([
+      const [allLogsRes, mismatchRes, employeesRes] = await Promise.all([
         api.get('/api/attendance/reports/all'),
         api.get('/api/attendance/reports/geo-mismatch'),
-        api.get('/api/sevaks/')
+        api.get('/api/employees/')
       ]);
       
       setAllLogs(allLogsRes.data);
       setMismatchLogs(mismatchRes.data);
-      setSevaks(sevaksRes.data);
+      setEmployees(employeesRes.data);
       
       const map = {};
-      sevaksRes.data.forEach(s => {
-        map[s.id] = `${s.first_name} ${s.last_name} (${s.sevak_id})`;
+      employeesRes.data.forEach(s => {
+        map[s.id] = `${s.first_name} ${s.last_name} (${s.employee_id})`;
       });
-      setSevakMap(map);
+      setEmployeeMap(map);
     } catch (err) {
       console.error("Failed to fetch reports", err);
     } finally {
@@ -78,7 +78,7 @@ export default function AttendanceReports() {
   const handleOpenDialog = (log = null) => {
     if (log) {
       setFormData({
-        sevak_id: log.sevak_id,
+        employee_id: log.employee_id,
         date: log.date,
         check_in_time: log.check_in_time ? new Date(log.check_in_time).toISOString().slice(0, 16) : '',
         check_out_time: log.check_out_time ? new Date(log.check_out_time).toISOString().slice(0, 16) : '',
@@ -86,7 +86,7 @@ export default function AttendanceReports() {
       });
     } else {
       setFormData({
-        sevak_id: '',
+        employee_id: '',
         date: new Date().toISOString().split('T')[0],
         check_in_time: '',
         check_out_time: '',
@@ -98,15 +98,15 @@ export default function AttendanceReports() {
   };
 
   const handleManualUpdate = async () => {
-    if (!formData.sevak_id || !formData.date) {
-      setError('Sevak and Date are required');
+    if (!formData.employee_id || !formData.date) {
+      setError('Employee and Date are required');
       return;
     }
     setSubmitting(true);
     setError('');
     try {
       const payload = {
-        sevak_id: formData.sevak_id,
+        employee_id: formData.employee_id,
         date: formData.date,
         status: formData.status,
         check_in_time: formData.check_in_time || null,
@@ -131,7 +131,7 @@ export default function AttendanceReports() {
       <Table sx={{ minWidth: { xs: 300, sm: 650 } }}>
         <TableHead sx={{ bgcolor: 'background.default' }}>
           <TableRow>
-            <TableCell><b>Sevak Name</b></TableCell>
+            <TableCell><b>Employee Name</b></TableCell>
             <TableCell><b>Date</b></TableCell>
             <TableCell><b>In Time</b></TableCell>
             <TableCell><b>Out Time</b></TableCell>
@@ -143,7 +143,7 @@ export default function AttendanceReports() {
         <TableBody>
           {logs.map((log) => (
             <TableRow key={log.id}>
-              <TableCell>{sevakMap[log.sevak_id] || 'Unknown User'}</TableCell>
+              <TableCell>{employeeMap[log.employee_id] || 'Unknown User'}</TableCell>
               <TableCell>{formatDisplayDate(log.date)}</TableCell>
               <TableCell>{log.check_in_time ? new Date(log.check_in_time).toLocaleTimeString() : 'N/A'}</TableCell>
               <TableCell>{log.check_out_time ? new Date(log.check_out_time).toLocaleTimeString() : 'N/A'}</TableCell>
@@ -245,7 +245,7 @@ export default function AttendanceReports() {
 
       {/* Manual Update Dialog */}
       <Dialog open={openDialog} onClose={() => !submitting && setOpenDialog(false)} maxWidth="sm" fullWidth>
-        <DialogTitle>{formData.sevak_id ? 'Edit Attendance' : 'Manual Attendance Entry'}</DialogTitle>
+        <DialogTitle>{formData.employee_id ? 'Edit Attendance' : 'Manual Attendance Entry'}</DialogTitle>
         <DialogContent dividers>
           {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
           <Grid container spacing={2}>
@@ -253,12 +253,12 @@ export default function AttendanceReports() {
               <Autocomplete
                 sx = {{ width : 250}}
                 size="medium"
-                options={sevaks}
-                getOptionLabel={(s) => `${s.first_name} ${s.last_name} (${s.sevak_id})`}
-                value={sevaks.find(s => s.id === formData.sevak_id) || null}
-                onChange={(_, v) => setFormData({ ...formData, sevak_id: v ? v.id : '' })}
+                options={employees}
+                getOptionLabel={(s) => `${s.first_name} ${s.last_name} (${s.employee_id})`}
+                value={employees.find(s => s.id === formData.employee_id) || null}
+                onChange={(_, v) => setFormData({ ...formData, employee_id: v ? v.id : '' })}
                 disabled={!!formData.id || submitting}
-                renderInput={(p) => <TextField {...p} label="Select Sevak" required />}
+                renderInput={(p) => <TextField {...p} label="Select Employee" required />}
               />
             </Grid>
             <Grid item xs={12} sm={6}>

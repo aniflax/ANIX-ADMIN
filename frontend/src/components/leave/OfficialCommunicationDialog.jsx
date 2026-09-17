@@ -27,7 +27,7 @@ import CloseIcon from '@mui/icons-material/Close';
 import api from '../../api/axios';
 
 const ROLES = [
-  { value: 'SEVAK', label: 'Sevak' },
+  { value: 'EMPLOYEE', label: 'Employee' },
   { value: 'HOD', label: 'HOD' },
   { value: 'HR', label: 'HR' },
   { value: 'ADMIN', label: 'Admin' },
@@ -178,7 +178,7 @@ export default function OfficialCommunicationDialog({ open, onClose, departments
   const accountOptions = useMemo(
     () => allAccounts.map((s) => ({
       id: s.id,
-      sevak_id: s.sevak_id,
+      employee_id: s.employee_id,
       first_name: s.first_name,
       last_name: s.last_name,
       email: s.email,
@@ -189,7 +189,7 @@ export default function OfficialCommunicationDialog({ open, onClose, departments
   );
 
   const formatAccountLabel = (o) => o
-    ? `${o.first_name} ${o.last_name} (#${o.sevak_id}) — ${ROLE_LABEL[o.role] || o.role}`
+    ? `${o.first_name} ${o.last_name} (#${o.employee_id}) — ${ROLE_LABEL[o.role] || o.role}`
     : '';
 
   return (
@@ -289,7 +289,7 @@ export default function OfficialCommunicationDialog({ open, onClose, departments
               <TextField
                 {...params}
                 label="Exclude accounts"
-                helperText="Accounts selected here will be removed from the recipient list. Includes Sevaks, HODs, HR, Admin, and Super Admin."
+                helperText="Accounts selected here will be removed from the recipient list. Includes Employees, HODs, HR, Admin, and Super Admin."
               />
             )}
             renderTags={(value, getTagProps) => value.map((option, index) => (
@@ -329,7 +329,7 @@ export default function OfficialCommunicationDialog({ open, onClose, departments
                     key={s.id}
                     size="small"
                     variant="outlined"
-                    label={`${s.first_name} ${s.last_name} (#${s.sevak_id}) — ${ROLE_LABEL[s.role] || s.role}`}
+                    label={`${s.first_name} ${s.last_name} (#${s.employee_id}) — ${ROLE_LABEL[s.role] || s.role}`}
                   />
                 ))}
                 {previewCount > previewSample.length && (

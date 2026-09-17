@@ -18,7 +18,7 @@ class AuditLog(Base):
     )  # UUID of who performed the action
     entity_type: Mapped[str] = mapped_column(
         String(100), nullable=False
-    )  # e.g. leave_request, sevak, attendance
+    )  # e.g. leave_request, employee, attendance
     entity_id: Mapped[str] = mapped_column(
         String(36), nullable=False
     )  # UUID of the affected record

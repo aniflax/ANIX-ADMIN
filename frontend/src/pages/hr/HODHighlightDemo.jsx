@@ -9,8 +9,8 @@ import CrownIcon from '@mui/icons-material/EmojiEvents';
  */
 
 export default function HODHighlightDemo() {
-  const sevaksData = [
-    { id: '1', name: '10004 - Standard Sevak', isHod: false },
+  const employeesData = [
+    { id: '1', name: '10004 - Standard Employee', isHod: false },
     { id: '2', name: '10003 - Head Department', isHod: true },
     { id: '3', name: '10012 - Devika S', isHod: false },
     { id: '4', name: '10011 - Sai Sankalp', isHod: false },
@@ -29,9 +29,9 @@ export default function HODHighlightDemo() {
         </Typography>
         <Box sx={{ bgcolor: '#f9f9f9', p: 2, borderRadius: 2 }}>
           <List>
-            {sevaksData.map(sevak => (
+            {employeesData.map(employee => (
               <ListItem
-                key={sevak.id}
+                key={employee.id}
                 sx={{
                   mb: 1,
                   p: 1.5,
@@ -43,8 +43,8 @@ export default function HODHighlightDemo() {
                   alignItems: 'center'
                 }}
               >
-                <Typography>{sevak.name}</Typography>
-                {sevak.isHod && (
+                <Typography>{employee.name}</Typography>
+                {employee.isHod && (
                   <Chip
                     label="HOD"
                     color="error"
@@ -65,24 +65,24 @@ export default function HODHighlightDemo() {
         </Typography>
         <Box sx={{ bgcolor: '#f9f9f9', p: 2, borderRadius: 2 }}>
           <List>
-            {sevaksData.map(sevak => (
+            {employeesData.map(employee => (
               <ListItem
-                key={sevak.id}
+                key={employee.id}
                 sx={{
                   mb: 1,
                   p: 1.5,
-                  bgcolor: sevak.isHod ? '#fff3e0' : 'white',
+                  bgcolor: employee.isHod ? '#fff3e0' : 'white',
                   borderRadius: 1,
-                  border: sevak.isHod ? '2px solid #f57c00' : '1px solid #e0e0e0',
+                  border: employee.isHod ? '2px solid #f57c00' : '1px solid #e0e0e0',
                   display: 'flex',
                   justifyContent: 'space-between',
                   alignItems: 'center'
                 }}
               >
-                <Typography sx={{ fontWeight: sevak.isHod ? 600 : 400 }}>
-                  {sevak.name}
+                <Typography sx={{ fontWeight: employee.isHod ? 600 : 400 }}>
+                  {employee.name}
                 </Typography>
-                {sevak.isHod && (
+                {employee.isHod && (
                   <Typography variant="caption" sx={{ color: '#f57c00', fontWeight: 'bold' }}>
                     (Department Head)
                   </Typography>
@@ -100,9 +100,9 @@ export default function HODHighlightDemo() {
         </Typography>
         <Box sx={{ bgcolor: '#f9f9f9', p: 2, borderRadius: 2 }}>
           <List>
-            {sevaksData.map(sevak => (
+            {employeesData.map(employee => (
               <ListItem
-                key={sevak.id}
+                key={employee.id}
                 sx={{
                   mb: 1,
                   p: 1.5,
@@ -115,14 +115,14 @@ export default function HODHighlightDemo() {
                 }}
               >
                 <ListItemIcon sx={{ minWidth: 40 }}>
-                  {sevak.isHod && (
+                  {employee.isHod && (
                     <Tooltip title="Department Head of Owner">
                       <StarIcon sx={{ color: '#1976d2', fontSize: 24 }} />
                     </Tooltip>
                   )}
                 </ListItemIcon>
-                <Typography sx={{ fontWeight: sevak.isHod ? 700 : 400 }}>
-                  {sevak.name}
+                <Typography sx={{ fontWeight: employee.isHod ? 700 : 400 }}>
+                  {employee.name}
                 </Typography>
               </ListItem>
             ))}
@@ -137,9 +137,9 @@ export default function HODHighlightDemo() {
         </Typography>
         <Box sx={{ bgcolor: '#f9f9f9', p: 2, borderRadius: 2 }}>
           <List>
-            {sevaksData.map(sevak => (
+            {employeesData.map(employee => (
               <ListItem
-                key={sevak.id}
+                key={employee.id}
                 sx={{
                   mb: 1,
                   p: 1.5,
@@ -152,14 +152,14 @@ export default function HODHighlightDemo() {
                 }}
               >
                 <ListItemIcon sx={{ minWidth: 40 }}>
-                  {sevak.isHod && (
+                  {employee.isHod && (
                     <Tooltip title="Department Head">
                       <CrownIcon sx={{ color: '#9c27b0', fontSize: 24 }} />
                     </Tooltip>
                   )}
                 </ListItemIcon>
-                <Typography sx={{ fontWeight: sevak.isHod ? 700 : 400 }}>
-                  {sevak.name}
+                <Typography sx={{ fontWeight: employee.isHod ? 700 : 400 }}>
+                  {employee.name}
                 </Typography>
               </ListItem>
             ))}
@@ -174,35 +174,35 @@ export default function HODHighlightDemo() {
         </Typography>
         <Box sx={{ bgcolor: '#f9f9f9', p: 2, borderRadius: 2 }}>
           <List>
-            {sevaksData.map(sevak => (
+            {employeesData.map(employee => (
               <ListItem
-                key={sevak.id}
+                key={employee.id}
                 sx={{
                   mb: 1,
                   p: 1.5,
-                  bgcolor: sevak.isHod ? '#e3f2fd' : 'white',
+                  bgcolor: employee.isHod ? '#e3f2fd' : 'white',
                   borderRadius: 1,
-                  border: sevak.isHod ? '2px solid #2196f3' : '1px solid #e0e0e0',
+                  border: employee.isHod ? '2px solid #2196f3' : '1px solid #e0e0e0',
                   display: 'flex',
                   alignItems: 'center',
                   gap: 2
                 }}
               >
                 <Badge
-                  badgeContent={sevak.isHod ? '★' : ''}
+                  badgeContent={employee.isHod ? '★' : ''}
                   color="primary"
                   overlap="rectangular"
                   anchorOrigin={{ vertical: 'top', horizontal: 'right' }}
                 >
-                  <Avatar sx={{ bgcolor: sevak.isHod ? '#2196f3' : '#9e9e9e' }}>
-                    {sevak.name.charAt(0)}
+                  <Avatar sx={{ bgcolor: employee.isHod ? '#2196f3' : '#9e9e9e' }}>
+                    {employee.name.charAt(0)}
                   </Avatar>
                 </Badge>
                 <Box sx={{ flex: 1 }}>
-                  <Typography sx={{ fontWeight: sevak.isHod ? 700 : 400 }}>
-                    {sevak.name}
+                  <Typography sx={{ fontWeight: employee.isHod ? 700 : 400 }}>
+                    {employee.name}
                   </Typography>
-                  {sevak.isHod && (
+                  {employee.isHod && (
                     <Typography variant="caption" sx={{ color: '#2196f3', fontWeight: 'bold' }}>
                       Department Head
                     </Typography>

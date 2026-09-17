@@ -1,10 +1,10 @@
 from app.models.department import ConfigAccessLevel
-from app.models.sevak import RoleEnum
+from app.models.employee import RoleEnum
 
 
-def test_attendance_reminder_status_and_force_send(api_client_factory, make_sevak, make_config, monkeypatch):
-    super_admin = make_sevak(
-        sevak_id=10000,
+def test_attendance_reminder_status_and_force_send(api_client_factory, make_employee, make_config, monkeypatch):
+    super_admin = make_employee(
+        employee_id=10000,
         email="superadmin@anix.local",
         email_verified=True,
         role=RoleEnum.SUPER_ADMIN,

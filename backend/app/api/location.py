@@ -1,8 +1,8 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from typing import List, Optional
 from pydantic import BaseModel
-from app.core.dependencies import DbSession, CurrentSevak
-from app.models.sevak import RoleEnum
+from app.core.dependencies import DbSession, CurrentEmployee
+from app.models.employee import RoleEnum
 from app.models.location import Location
 from app.models.department_location import DepartmentLocation
 from app.models.department import Department
@@ -26,7 +26,7 @@ class LocationUpdate(BaseModel):
     geo_threshold_meters: Optional[int] = None
 
 
-def require_super_admin(current_user: CurrentSevak):
+def require_super_admin(current_user: CurrentEmployee):
     if current_user.role != RoleEnum.SUPER_ADMIN:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
@@ -35,7 +35,7 @@ def require_super_admin(current_user: CurrentSevak):
 
 
 @router.get("/")
-def get_locations(db: DbSession, current_user: CurrentSevak):
+def get_locations(db: DbSession, current_user: CurrentEmployee):
     """Get all active locations."""
     locations = db.query(Location).filter(Location.is_active == True).order_by(Location.name).all()
     return [{
@@ -49,7 +49,7 @@ def get_locations(db: DbSession, current_user: CurrentSevak):
 
 
 @router.get("/{location_id}")
-def get_location(location_id: str, db: DbSession, current_user: CurrentSevak):
+def get_location(location_id: str, db: DbSession, current_user: CurrentEmployee):
     """Get a single location with departments using it."""
     location = db.query(Location).filter(Location.id == location_id, Location.is_active == True).first()
     if not location:
@@ -76,7 +76,7 @@ def get_location(location_id: str, db: DbSession, current_user: CurrentSevak):
 
 
 @router.post("/")
-def create_location(data: LocationCreate, db: DbSession, current_user: CurrentSevak):
+def create_location(data: LocationCreate, db: DbSession, current_user: CurrentEmployee):
     """Create a new location. SuperAdmin only."""
     require_super_admin(current_user)
     
@@ -107,7 +107,7 @@ def create_location(data: LocationCreate, db: DbSession, current_user: CurrentSe
 
 
 @router.put("/{location_id}")
-def update_location(location_id: str, data: LocationUpdate, db: DbSession, current_user: CurrentSevak):
+def update_location(location_id: str, data: LocationUpdate, db: DbSession, current_user: CurrentEmployee):
     """Update a location. SuperAdmin only."""
     require_super_admin(current_user)
     
@@ -143,7 +143,7 @@ def update_location(location_id: str, data: LocationUpdate, db: DbSession, curre
 
 
 @router.delete("/{location_id}")
-def delete_location(location_id: str, db: DbSession, current_user: CurrentSevak):
+def delete_location(location_id: str, db: DbSession, current_user: CurrentEmployee):
     """Delete (deactivate) a location. SuperAdmin only."""
     require_super_admin(current_user)
     

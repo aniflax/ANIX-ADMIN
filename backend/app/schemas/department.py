@@ -27,7 +27,7 @@ class DepartmentResponse(DepartmentBase):
     is_active: bool
     created_at: datetime
     updated_at: datetime
-    sevak_count: Optional[int] = 0
+    employee_count: Optional[int] = 0
 
     class Config:
         from_attributes = True

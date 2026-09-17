@@ -18,7 +18,7 @@ os.environ.setdefault(
 try:
     from sqlalchemy import create_engine
     from sqlalchemy.orm import sessionmaker
-    from app.models.sevak import Sevak, RoleEnum
+    from app.models.employee import Employee, RoleEnum
 
     DATABASE_URL = os.getenv('DATABASE_URL')
     engine = create_engine(DATABASE_URL)
@@ -27,9 +27,9 @@ try:
     db = SessionLocal()
 
     # Find and fix HODs without departments
-    problematic_hods = db.query(Sevak).filter(
-        Sevak.role == RoleEnum.HOD,
-        Sevak.department_id == None
+    problematic_hods = db.query(Employee).filter(
+        Employee.role == RoleEnum.HOD,
+        Employee.department_id == None
     ).all()
 
     if not problematic_hods:
@@ -37,11 +37,11 @@ try:
     else:
         print(f"[FOUND] {len(problematic_hods)} HOD(s) without departments:")
         for hod in problematic_hods:
-            print(f"  - Sevak {hod.sevak_id}: {hod.first_name} {hod.last_name}")
-            hod.role = RoleEnum.SEVAK
+            print(f"  - Employee {hod.employee_id}: {hod.first_name} {hod.last_name}")
+            hod.role = RoleEnum.EMPLOYEE
 
         db.commit()
-        print(f"[FIXED] {len(problematic_hods)} sevak(s)")
+        print(f"[FIXED] {len(problematic_hods)} employee(s)")
 
     db.close()
 

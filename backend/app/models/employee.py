@@ -12,23 +12,23 @@ class RoleEnum(str, enum.Enum):
     ADMIN = "ADMIN"
     HR = "HR"
     HOD = "HOD"
-    SEVAK = "SEVAK"
+    EMPLOYEE = "EMPLOYEE"
 
 
-class SevakStatusEnum(str, enum.Enum):
+class EmployeeStatusEnum(str, enum.Enum):
     ACTIVE = "ACTIVE"
     INACTIVE = "INACTIVE"
     LOCKED = "LOCKED"
 
 
-class Sevak(Base):
-    __tablename__ = "sevaks"
+class Employee(Base):
+    __tablename__ = "employees"
 
     id: Mapped[str] = mapped_column(
         String(36), primary_key=True,
         default=lambda: str(uuid.uuid4())
     )
-    sevak_id: Mapped[int] = mapped_column(
+    employee_id: Mapped[int] = mapped_column(
         Integer, unique=True, nullable=False
     )  # 5 digit numeric ID e.g. 10001
     first_name: Mapped[str] = mapped_column(String(100), nullable=False)
@@ -43,12 +43,12 @@ class Sevak(Base):
         String(255), nullable=False
     )
     role: Mapped[RoleEnum] = mapped_column(
-        SAEnum(RoleEnum), nullable=False, default=RoleEnum.SEVAK
+        SAEnum(RoleEnum), nullable=False, default=RoleEnum.EMPLOYEE
     )
-    status: Mapped[SevakStatusEnum] = mapped_column(
-        SAEnum(SevakStatusEnum),
+    status: Mapped[EmployeeStatusEnum] = mapped_column(
+        SAEnum(EmployeeStatusEnum),
         nullable=False,
-        default=SevakStatusEnum.ACTIVE
+        default=EmployeeStatusEnum.ACTIVE
     )
     failed_login_attempts: Mapped[int] = mapped_column(
         Integer, default=0
@@ -90,7 +90,7 @@ class AccountEvent(Base):
         String(36), primary_key=True,
         default=lambda: str(uuid.uuid4())
     )
-    sevak_id: Mapped[str] = mapped_column(String(36), nullable=False)
+    employee_id: Mapped[str] = mapped_column(String(36), nullable=False)
     event_type: Mapped[str] = mapped_column(
         String(50), nullable=False
     )  # LOGIN_FAILED, LOCKED, UNLOCKED, PASSWORD_RESET

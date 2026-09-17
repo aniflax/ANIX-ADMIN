@@ -42,14 +42,14 @@ def _document_folder(doc_type: str) -> str:
     }.get(doc_type, doc_type.replace("_", "-"))
 
 
-def build_document_key(sevak_id: str, doc_type: str, original_filename: str) -> str:
+def build_document_key(employee_id: str, doc_type: str, original_filename: str) -> str:
     ext = Path(original_filename or "").suffix.lower()
     if ext not in ALLOWED_EXTENSIONS:
         ext = mimetypes.guess_extension(mimetypes.guess_type(original_filename or "")[0] or "") or ""
     if ext not in ALLOWED_EXTENSIONS:
         raise HTTPException(status_code=400, detail="Upload PDF, JPG, JPEG, or PNG files only.")
 
-    return f"sevaks/{sevak_id}/{_document_folder(doc_type)}/{uuid.uuid4()}{ext}"
+    return f"employees/{employee_id}/{_document_folder(doc_type)}/{uuid.uuid4()}{ext}"
 
 
 def _validate_document(filename: str, content_type: str, data: bytes) -> None:
@@ -105,12 +105,12 @@ def _ensure_r2_config() -> None:
         )
 
 
-async def save_document_upload(file: UploadFile, *, sevak_id: str, doc_type: str) -> StoredObject:
+async def save_document_upload(file: UploadFile, *, employee_id: str, doc_type: str) -> StoredObject:
     data = await file.read()
     filename = file.filename or f"{doc_type}.bin"
     content_type = _content_type(filename, file.content_type)
     _validate_document(filename, content_type, data)
-    key = build_document_key(sevak_id=sevak_id, doc_type=doc_type, original_filename=filename)
+    key = build_document_key(employee_id=employee_id, doc_type=doc_type, original_filename=filename)
 
     if settings.STORAGE_PROVIDER.lower() == "r2":
         _ensure_r2_config()
@@ -185,11 +185,11 @@ def delete_document(key: str | None) -> None:
             return
 
 
-def migrate_local_file_to_storage(path: str, *, sevak_id: str, doc_type: str) -> StoredObject:
+def migrate_local_file_to_storage(path: str, *, employee_id: str, doc_type: str) -> StoredObject:
     source = Path(path)
     if not source.exists():
         raise HTTPException(status_code=404, detail="Local document not found")
-    key = build_document_key(sevak_id=sevak_id, doc_type=doc_type, original_filename=source.name)
+    key = build_document_key(employee_id=employee_id, doc_type=doc_type, original_filename=source.name)
     content_type = _content_type(source.name, None)
 
     if settings.STORAGE_PROVIDER.lower() == "r2":

@@ -5,16 +5,16 @@ import uuid
 from app.models.department import Department
 from app.models.department_location import DepartmentLocation
 from app.models.location import Location
-from app.models.sevak import Sevak, RoleEnum
+from app.models.employee import Employee, RoleEnum
 from app.schemas.department import DepartmentCreate, DepartmentUpdate
 
 
-def _get_hod_candidate(db: Session, hod_id: str, *, current_department_id: str | None = None) -> Sevak:
-    candidate = db.query(Sevak).filter(Sevak.id == hod_id).first()
+def _get_hod_candidate(db: Session, hod_id: str, *, current_department_id: str | None = None) -> Employee:
+    candidate = db.query(Employee).filter(Employee.id == hod_id).first()
     if not candidate:
         raise HTTPException(status_code=404, detail="Selected HOD candidate not found")
-    if candidate.role != RoleEnum.SEVAK:
-        raise HTTPException(status_code=400, detail="Only Sevak profiles can be promoted to HOD")
+    if candidate.role != RoleEnum.EMPLOYEE:
+        raise HTTPException(status_code=400, detail="Only Employee profiles can be promoted to HOD")
 
     existing_hod_dept = db.query(Department).filter(
         Department.hod_id == hod_id,
@@ -23,7 +23,7 @@ def _get_hod_candidate(db: Session, hod_id: str, *, current_department_id: str |
     if existing_hod_dept:
         raise HTTPException(
             status_code=400,
-            detail=f"This sevak is already HOD of department '{existing_hod_dept.name}'. A sevak can be HOD for only one department.",
+            detail=f"This employee is already HOD of department '{existing_hod_dept.name}'. A employee can be HOD for only one department.",
         )
     return candidate
 
@@ -37,7 +37,7 @@ def get_departments(db: Session, active_only: bool = True) -> List[dict]:
     result = []
     
     for dept in depts:
-        sevak_count = db.query(Sevak).filter(Sevak.department_id == dept.id).count()
+        employee_count = db.query(Employee).filter(Employee.department_id == dept.id).count()
         
         # Get department locations
         dept_locations = db.query(DepartmentLocation).filter(
@@ -55,7 +55,7 @@ def get_departments(db: Session, active_only: bool = True) -> List[dict]:
             "is_active": dept.is_active,
             "created_at": dept.created_at,
             "updated_at": dept.updated_at,
-            "sevak_count": sevak_count,
+            "employee_count": employee_count,
             "locations": [{
                 "id": loc.id,
                 "name": loc.name,
@@ -69,7 +69,7 @@ def get_departments(db: Session, active_only: bool = True) -> List[dict]:
     return result
 
 
-def create_department(db: Session, dept_data: DepartmentCreate, current_user: Sevak) -> dict:
+def create_department(db: Session, dept_data: DepartmentCreate, current_user: Employee) -> dict:
     if current_user.role not in [RoleEnum.HR, RoleEnum.ADMIN, RoleEnum.SUPER_ADMIN]:
         raise HTTPException(status_code=403, detail="Only HR/Admin can create departments")
     
@@ -108,7 +108,7 @@ def create_department(db: Session, dept_data: DepartmentCreate, current_user: Se
         "description": dept.description,
         "hod_id": dept.hod_id,
         "is_active": dept.is_active,
-        "sevak_count": 0,
+        "employee_count": 0,
         "locations": []
     }
 
@@ -118,7 +118,7 @@ def get_department(db: Session, dept_id: str) -> dict:
     if not dept:
         raise HTTPException(status_code=404, detail="Department not found")
     
-    sevak_count = db.query(Sevak).filter(Sevak.department_id == dept.id).count()
+    employee_count = db.query(Employee).filter(Employee.department_id == dept.id).count()
     
     # Get department locations
     dept_locations = db.query(DepartmentLocation).filter(
@@ -136,7 +136,7 @@ def get_department(db: Session, dept_id: str) -> dict:
         "is_active": dept.is_active,
         "created_at": dept.created_at,
         "updated_at": dept.updated_at,
-        "sevak_count": sevak_count,
+        "employee_count": employee_count,
         "locations": [{
             "id": loc.id,
             "name": loc.name,
@@ -148,7 +148,7 @@ def get_department(db: Session, dept_id: str) -> dict:
     }
 
 
-def update_department(db: Session, dept_id: str, dept_data: DepartmentUpdate, current_user: Sevak) -> dict:
+def update_department(db: Session, dept_id: str, dept_data: DepartmentUpdate, current_user: Employee) -> dict:
     if current_user.role not in [RoleEnum.HR, RoleEnum.ADMIN, RoleEnum.SUPER_ADMIN]:
         raise HTTPException(status_code=403, detail="Only HR/Admin can update departments")
         
@@ -178,7 +178,7 @@ def update_department(db: Session, dept_id: str, dept_data: DepartmentUpdate, cu
         if dept_data.hod_id and dept_data.hod_id != old_hod_id:
             new_hod = _get_hod_candidate(db, dept_data.hod_id, current_department_id=dept_id)
         elif dept_data.hod_id == old_hod_id:
-            new_hod = db.query(Sevak).filter(Sevak.id == dept_data.hod_id).first()
+            new_hod = db.query(Employee).filter(Employee.id == dept_data.hod_id).first()
 
         if new_hod and dept_data.hod_id != old_hod_id:
             new_hod.role = RoleEnum.HOD
@@ -192,9 +192,9 @@ def update_department(db: Session, dept_id: str, dept_data: DepartmentUpdate, cu
                 Department.id != dept_id
             ).first()
             if not still_hod:
-                old_hod = db.query(Sevak).filter(Sevak.id == old_hod_id).first()
+                old_hod = db.query(Employee).filter(Employee.id == old_hod_id).first()
                 if old_hod and old_hod.role == RoleEnum.HOD:
-                    old_hod.role = RoleEnum.SEVAK
+                    old_hod.role = RoleEnum.EMPLOYEE
                     old_hod.department_id = None
                     db.add(old_hod)
         
@@ -204,7 +204,7 @@ def update_department(db: Session, dept_id: str, dept_data: DepartmentUpdate, cu
     return get_department(db, dept_id)
 
 
-def delete_department(db: Session, dept_id: str, current_user: Sevak):
+def delete_department(db: Session, dept_id: str, current_user: Employee):
     if current_user.role not in [RoleEnum.HR, RoleEnum.ADMIN, RoleEnum.SUPER_ADMIN]:
         raise HTTPException(status_code=403, detail="Only HR/Admin can delete departments")
         
@@ -212,19 +212,19 @@ def delete_department(db: Session, dept_id: str, current_user: Sevak):
     if not dept:
         raise HTTPException(status_code=404, detail="Department not found")
     
-    members = db.query(Sevak).filter(Sevak.department_id == dept.id).all()
+    members = db.query(Employee).filter(Employee.department_id == dept.id).all()
     for member in members:
         member.department_id = None
         if member.role == RoleEnum.HOD:
-            member.role = RoleEnum.SEVAK
+            member.role = RoleEnum.EMPLOYEE
         db.add(member)
     
     if dept.hod_id:
-        hod = db.query(Sevak).filter(Sevak.id == dept.hod_id).first()
+        hod = db.query(Employee).filter(Employee.id == dept.hod_id).first()
         if hod:
             hod.department_id = None
             if hod.role == RoleEnum.HOD:
-                hod.role = RoleEnum.SEVAK
+                hod.role = RoleEnum.EMPLOYEE
             db.add(hod)
     
     db.query(DepartmentLocation).filter(DepartmentLocation.department_id == dept.id).delete(synchronize_session=False)

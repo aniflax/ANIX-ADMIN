@@ -22,16 +22,16 @@ export default function ActivateAccount() {
   const navigate = useNavigate();
   const { setToken, setUser } = useAuth();
   const token = getActivationParam(searchParams, 'token');
-  const sevakId = getActivationParam(searchParams, 'id') || getActivationParam(searchParams, 'sevak_id');
+  const employeeId = getActivationParam(searchParams, 'id') || getActivationParam(searchParams, 'employee_id');
 
   const [status, setStatus] = useState('loading');
   const [message, setMessage] = useState('');
-  const [sevakIdAllocated, setSevakIdAllocated] = useState(null);
+  const [employeeIdAllocated, setEmployeeIdAllocated] = useState(null);
   const [checkingLink, setCheckingLink] = useState(true);
 
   useEffect(() => {
     const validateLink = async () => {
-      if (!token || !sevakId) {
+      if (!token || !employeeId) {
         setStatus('error');
         setMessage('Account activation link is invalid or has expired.');
         setCheckingLink(false);
@@ -39,10 +39,10 @@ export default function ActivateAccount() {
       }
 
       try {
-        await api.post('/api/auth/activate-account-validate', { token, sevak_id: sevakId });
-        const res = await api.post('/api/auth/activate-account', { token, sevak_id: sevakId });
+        await api.post('/api/auth/activate-account-validate', { token, employee_id: employeeId });
+        const res = await api.post('/api/auth/activate-account', { token, employee_id: employeeId });
         setStatus('success');
-        setSevakIdAllocated(res.data.sevak_id);
+        setEmployeeIdAllocated(res.data.employee_id);
         setMessage(res.data.message || 'Account activated successfully!');
 
         // Auto-login: store token and fetch user
@@ -64,7 +64,7 @@ export default function ActivateAccount() {
     };
 
     validateLink();
-  }, [token, sevakId, setToken, setUser]);
+  }, [token, employeeId, setToken, setUser]);
 
   useEffect(() => {
     if (status === 'success') {
@@ -116,9 +116,9 @@ export default function ActivateAccount() {
             <Alert severity="success" sx={{ mt: 3, textAlign: 'left' }}>
               {message || 'Account activated successfully!'}
             </Alert>
-            {sevakIdAllocated && (
+            {employeeIdAllocated && (
               <Typography variant="body1" fontWeight={600} sx={{ mt: 2, color: 'primary.main' }}>
-                You can now login with Sevak ID: {sevakIdAllocated}
+                You can now login with Employee ID: {employeeIdAllocated}
               </Typography>
             )}
             <Typography variant="body2" color="text.secondary" sx={{ mt: 2 }}>

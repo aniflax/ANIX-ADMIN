@@ -502,7 +502,7 @@
   .role-admin { background: #fce7f3; color: #9d174d; }
   .role-hr { background: #dbeafe; color: #1e40af; }
   .role-hod { background: #d1fae5; color: #065f46; }
-  .role-sevak { background: #ede9fe; color: #5b21b6; }
+  .role-employee { background: #ede9fe; color: #5b21b6; }
   .role-all { background: #f3f4f6; color: #374151; }
 
   /* ========== FAQ ========== */
@@ -729,15 +729,15 @@
   </div>
 
   <div class="toc-part">
-    <div class="toc-part-title">Part 4 — Sevak Features</div>
+    <div class="toc-part-title">Part 4 — Employee Features</div>
     <ul class="toc-list">
-      <li><a href="#sevak-attendance">Attendance (Geo-Based Check-In)</a></li>
-      <li><a href="#sevak-leaves">Leaves — Apply &amp; Track</a></li>
-      <li><a href="#sevak-balance">Leave Balance</a></li>
-      <li><a href="#sevak-myrequests">My Requests (Progress Tracking)</a></li>
-      <li><a href="#sevak-calendar">Calendar History</a></li>
-      <li><a href="#sevak-detail">Leave Request Detail Popup</a></li>
-      <li><a href="#sevak-weekoff">Week-Off Swap</a></li>
+      <li><a href="#employee-attendance">Attendance (Geo-Based Check-In)</a></li>
+      <li><a href="#employee-leaves">Leaves — Apply &amp; Track</a></li>
+      <li><a href="#employee-balance">Leave Balance</a></li>
+      <li><a href="#employee-myrequests">My Requests (Progress Tracking)</a></li>
+      <li><a href="#employee-calendar">Calendar History</a></li>
+      <li><a href="#employee-detail">Leave Request Detail Popup</a></li>
+      <li><a href="#employee-weekoff">Week-Off Swap</a></li>
     </ul>
   </div>
 
@@ -753,7 +753,7 @@
   <div class="toc-part">
     <div class="toc-part-title">Part 6 — HR Features</div>
     <ul class="toc-list">
-      <li><a href="#hr-directory">Sevak Directory</a></li>
+      <li><a href="#hr-directory">Employee Directory</a></li>
       <li><a href="#hr-leaveadmin">Leave Admin</a></li>
       <li><a href="#hr-departments">Departments Management</a></li>
       <li><a href="#hr-attendance">Attendance Reports</a></li>
@@ -813,9 +813,9 @@
     <div class="section-title">Welcome to <span class="highlight">anix HRMS</span></div>
   </div>
 
-  <p>Welcome to the <strong>anix HRMS</strong> (Human Resource Management System) — a purpose-built application by <strong>anix</strong> (Art of Living) to manage the complete employee lifecycle of Sevaks across the organization.</p>
+  <p>Welcome to the <strong>anix HRMS</strong> (Human Resource Management System) — a purpose-built application by <strong>anix</strong> (Art of Living) to manage the complete employee lifecycle of Employees across the organization.</p>
 
-  <p>This <strong>SuperAdmin User Manual</strong> is the <em>comprehensive guide</em> to the entire application. It covers every feature available to every role — from a Sevak checking in for the day, to a SuperAdmin configuring system-wide settings. If you need to know how anything works in anix HRMS, it is documented here.</p>
+  <p>This <strong>SuperAdmin User Manual</strong> is the <em>comprehensive guide</em> to the entire application. It covers every feature available to every role — from a Employee checking in for the day, to a SuperAdmin configuring system-wide settings. If you need to know how anything works in anix HRMS, it is documented here.</p>
 
   <h3 id="what-it-does">What This Application Does</h3>
   <p>anix HRMS is a centralized platform for managing:</p>
@@ -823,7 +823,7 @@
     <li><strong>Attendance</strong> — Geo-validated check-in/check-out tied to office locations</li>
     <li><strong>Leave Management</strong> — Apply, approve, track, and report on leaves with full workflow</li>
     <li><strong>Week-Off Management</strong> — Default week-offs, swap requests, and approval workflows</li>
-    <li><strong>Employee Directory</strong> — Complete Sevak profiles with documents, departments, and roles</li>
+    <li><strong>Employee Directory</strong> — Complete Employee profiles with documents, departments, and roles</li>
     <li><strong>Official Communication</strong> — Bulk email to individuals, departments, or role-based groups</li>
     <li><strong>Account Administration</strong> — Create, lock, unlock, reset, and delete accounts</li>
     <li><strong>Office Locations</strong> — Manage physical office locations with GPS coordinates and geo-thresholds</li>
@@ -840,7 +840,7 @@
     <div class="feature-card">
       <div class="feature-icon">🔄</div>
       <h4>Week-Off Swap</h4>
-      <p>Sevaks can swap their default week-off with any working day, subject to HOD approval. Conflicts are automatically detected.</p>
+      <p>Employees can swap their default week-off with any working day, subject to HOD approval. Conflicts are automatically detected.</p>
     </div>
     <div class="feature-card">
       <div class="feature-icon">📅</div>
@@ -860,7 +860,7 @@
     <div class="feature-card">
       <div class="feature-icon">🛡️</div>
       <h4>Multi-Level Approvals</h4>
-      <p>Leave requests follow a configurable approval chain: Sevak → HOD → HR, with the ability to skip HOD when unavailable.</p>
+      <p>Leave requests follow a configurable approval chain: Employee → HOD → HR, with the ability to skip HOD when unavailable.</p>
     </div>
   </div>
 
@@ -889,7 +889,7 @@
       <tr>
         <td>3</td>
         <td><span class="role-badge role-hr">HR</span></td>
-        <td>Sevak directory, leave admin, attendance reports, departments, official communication</td>
+        <td>Employee directory, leave admin, attendance reports, departments, official communication</td>
       </tr>
       <tr>
         <td>4</td>
@@ -898,7 +898,7 @@
       </tr>
       <tr>
         <td>5 (Base)</td>
-        <td><span class="role-badge role-sevak">Sevak</span></td>
+        <td><span class="role-badge role-employee">Employee</span></td>
         <td>Attendance, leaves, profile, week-off swap</td>
       </tr>
     </tbody>
@@ -920,17 +920,17 @@
   </div>
 
   <h3 id="self-registration">Self-Registration (Onboarding)</h3>
-  <p>New Sevaks can register themselves through the Onboarding page. This is typically the first interaction a new user has with the system.</p>
+  <p>New Employees can register themselves through the Onboarding page. This is typically the first interaction a new user has with the system.</p>
 
   <div class="screenshot-wrapper">
     <img src="Screenshots/Onboarding page (self-registration).PNG" alt="Onboarding page — Self-registration form" class="screenshot">
-    <div class="screenshot-caption">Onboarding page — Self-registration form for new Sevaks</div>
+    <div class="screenshot-caption">Onboarding page — Self-registration form for new Employees</div>
   </div>
 
   <ol class="steps">
     <li class="step">
       <div class="step-title">Navigate to the Onboarding Page</div>
-      <div class="step-desc">Click the "Register" or "New Sevak" link on the login page, or visit the onboarding URL directly.</div>
+      <div class="step-desc">Click the "Register" or "New Employee" link on the login page, or visit the onboarding URL directly.</div>
     </li>
     <li class="step">
       <div class="step-title">Fill in Personal Details</div>
@@ -1031,7 +1031,7 @@
     <div class="section-title">Common Features <span class="highlight">(All Roles)</span></div>
   </div>
 
-  <p>These features are available to every user of anix HRMS, regardless of role. Whether you are a Sevak or a SuperAdmin, you have access to these core features.</p>
+  <p>These features are available to every user of anix HRMS, regardless of role. Whether you are a Employee or a SuperAdmin, you have access to these core features.</p>
 
   <h3 id="gurudev-wisdom">Gurudev's Wisdom on Dashboard</h3>
   <p>Every time you open the Dashboard, you are greeted with a unique, curated quote from <strong>Gurudev Sri Sri Ravishankar</strong>. There are <strong>365 unique quotes</strong> — one for each day of the year. No quote is repeated within a calendar year.</p>
@@ -1043,7 +1043,7 @@
 
   <div class="info-card">
     <div class="info-card-title">🙏 Daily Inspiration</div>
-    <p>The quote changes automatically each day at midnight. This feature is designed to start every Sevak's day with a moment of reflection and wisdom from Gurudev.</p>
+    <p>The quote changes automatically each day at midnight. This feature is designed to start every Employee's day with a moment of reflection and wisdom from Gurudev.</p>
   </div>
 
   <h3 id="my-profile">My Profile</h3>
@@ -1076,17 +1076,17 @@
 </div>
 
 <!-- ============================================================ -->
-<!-- PART 4: SEVAK FEATURES -->
+<!-- PART 4: EMPLOYEE FEATURES -->
 <!-- ============================================================ -->
-<div class="section" id="sevak-features">
+<div class="section" id="employee-features">
   <div class="section-header">
     <div class="section-number">PART 4</div>
-    <div class="section-title">Sevak <span class="highlight">Features</span></div>
+    <div class="section-title">Employee <span class="highlight">Features</span></div>
   </div>
 
-  <p>These are the core day-to-day features used by every Sevak — checking attendance, applying for leaves, and managing week-off swaps.</p>
+  <p>These are the core day-to-day features used by every Employee — checking attendance, applying for leaves, and managing week-off swaps.</p>
 
-  <h3 id="sevak-attendance">Attendance — Geo-Based Check-In</h3>
+  <h3 id="employee-attendance">Attendance — Geo-Based Check-In</h3>
   <p>anix HRMS uses <strong>geo-validated attendance</strong>. When you check in, your browser's GPS coordinates are compared against your assigned office location. If you are outside the configured radius, your attendance is flagged as a "Geo Mismatch" for HR review.</p>
 
   <div class="two-col">
@@ -1125,7 +1125,7 @@
     <p>A geo mismatch does <strong>not</strong> prevent you from checking in. It flags the record for HR review. If you are working remotely or at a different office, inform your HR in advance.</p>
   </div>
 
-  <h3 id="sevak-leaves">Leaves — Apply &amp; Track</h3>
+  <h3 id="employee-leaves">Leaves — Apply &amp; Track</h3>
   <p>The Leaves section is your hub for all leave-related activities.</p>
 
   <div class="screenshot-wrapper">
@@ -1149,7 +1149,7 @@
     </li>
   </ol>
 
-  <h3 id="sevak-balance">Leave Balance</h3>
+  <h3 id="employee-balance">Leave Balance</h3>
   <p>View your remaining leave days for each leave type at a glance.</p>
 
   <div class="screenshot-wrapper">
@@ -1165,7 +1165,7 @@
     <li>Pending requests (counted against balance once approved)</li>
   </ul>
 
-  <h3 id="sevak-myrequests">My Requests — Progress Tracking</h3>
+  <h3 id="employee-myrequests">My Requests — Progress Tracking</h3>
   <p>Track the status of all your leave requests in one place.</p>
 
   <div class="screenshot-wrapper">
@@ -1181,7 +1181,7 @@
     <li><strong>Cancelled</strong> — Cancelled by you before approval</li>
   </ul>
 
-  <h3 id="sevak-calendar">Calendar History</h3>
+  <h3 id="employee-calendar">Calendar History</h3>
   <p>Visual month-view of all your leaves and attendance records.</p>
 
   <div class="screenshot-wrapper">
@@ -1197,7 +1197,7 @@
     <li><strong>Gray</strong> — Week-offs or non-working days</li>
   </ul>
 
-  <h3 id="sevak-detail">Leave Request Detail Popup</h3>
+  <h3 id="employee-detail">Leave Request Detail Popup</h3>
   <p>Click on any leave request in "My Requests" to see full details.</p>
 
   <div class="screenshot-wrapper">
@@ -1214,7 +1214,7 @@
     <li>Option to cancel (if still pending)</li>
   </ul>
 
-  <h3 id="sevak-weekoff">Week-Off Swap</h3>
+  <h3 id="employee-weekoff">Week-Off Swap</h3>
   <p>Need to work on your usual day off and take a different day off instead? Use the Week-Off Swap feature.</p>
 
   <div class="screenshot-wrapper">
@@ -1257,20 +1257,20 @@
     <div class="section-title">HOD <span class="highlight">Features</span></div>
   </div>
 
-  <p>Heads of Department (HODs) have all Sevak features plus department-level management capabilities.</p>
+  <p>Heads of Department (HODs) have all Employee features plus department-level management capabilities.</p>
 
   <h3 id="hod-directory">Department Directory</h3>
-  <p>HODs can view all Sevaks within their own department. This provides visibility into team members, their profiles, and their leave status.</p>
+  <p>HODs can view all Employees within their own department. This provides visibility into team members, their profiles, and their leave status.</p>
 
   <ul>
-    <li>View list of all Sevaks in your department</li>
-    <li>See each Sevak's profile details</li>
+    <li>View list of all Employees in your department</li>
+    <li>See each Employee's profile details</li>
     <li>Monitor pending leave requests from your team</li>
     <li>View attendance summaries for your department</li>
   </ul>
 
   <h3 id="hod-approvals">Leave Approvals</h3>
-  <p>HODs are the first level of approval for leave requests from Sevaks in their department.</p>
+  <p>HODs are the first level of approval for leave requests from Employees in their department.</p>
 
   <div class="screenshot-wrapper">
     <img src="Screenshots/HOD — Pending Approvals page.PNG" alt="HOD — Pending Approvals page" class="screenshot">
@@ -1281,15 +1281,15 @@
   <ol class="steps">
     <li class="step">
       <div class="step-title">Receive Notification</div>
-      <div class="step-desc">When a Sevak in your department submits a leave request, it appears in your Pending Approvals queue.</div>
+      <div class="step-desc">When a Employee in your department submits a leave request, it appears in your Pending Approvals queue.</div>
     </li>
     <li class="step">
       <div class="step-title">Review the Request</div>
-      <div class="step-desc">Click on the request to see full details — leave type, dates, reason, and the Sevak's leave balance.</div>
+      <div class="step-desc">Click on the request to see full details — leave type, dates, reason, and the Employee's leave balance.</div>
     </li>
     <li class="step">
       <div class="step-title">Approve or Reject</div>
-      <div class="step-desc">Click "Approve" to forward the request to HR, or "Reject" with remarks. The Sevak is notified of your decision.</div>
+      <div class="step-desc">Click "Approve" to forward the request to HR, or "Reject" with remarks. The Employee is notified of your decision.</div>
     </li>
     <li class="step">
       <div class="step-title">Skip HOD Option</div>
@@ -1303,7 +1303,7 @@
   </div>
 
   <h3 id="hod-weekoff">Week-Off Swap Approvals</h3>
-  <p>HODs also approve week-off swap requests from Sevaks in their department. The process is similar to leave approvals — review the swap date, check for conflicts, and approve or reject.</p>
+  <p>HODs also approve week-off swap requests from Employees in their department. The process is similar to leave approvals — review the swap date, check for conflicts, and approve or reject.</p>
 </div>
 
 <!-- ============================================================ -->
@@ -1317,20 +1317,20 @@
 
   <p>HR personnel have organization-wide management capabilities for leaves, attendance, departments, and communication.</p>
 
-  <h3 id="hr-directory">Sevak Directory</h3>
-  <p>The Sevak Directory provides a complete view of all employees across the organization.</p>
+  <h3 id="hr-directory">Employee Directory</h3>
+  <p>The Employee Directory provides a complete view of all employees across the organization.</p>
 
   <ul>
-    <li>View all Sevaks across all departments</li>
+    <li>View all Employees across all departments</li>
     <li>Search and filter by name, department, role, or status</li>
-    <li>Onboarding tracking — see which new Sevaks have completed registration</li>
+    <li>Onboarding tracking — see which new Employees have completed registration</li>
     <li>CSV export — download the complete directory as a spreadsheet</li>
-    <li>Edit Sevak profiles including default week-off</li>
+    <li>Edit Employee profiles including default week-off</li>
   </ul>
 
   <div class="info-card">
     <div class="info-card-title">ℹ️ CSV Export</div>
-    <p>Click the "Export CSV" button to download the complete Sevak directory. This is useful for reporting, auditing, and external compliance requirements.</p>
+    <p>Click the "Export CSV" button to download the complete Employee directory. This is useful for reporting, auditing, and external compliance requirements.</p>
   </div>
 
   <h3 id="hr-leaveadmin">Leave Admin</h3>
@@ -1387,7 +1387,7 @@
   </ul>
 
   <h3 id="hr-comm">Official Communication</h3>
-  <p>Send bulk emails to Sevaks from within the application.</p>
+  <p>Send bulk emails to Employees from within the application.</p>
 
   <div class="two-col">
     <div class="screenshot-wrapper">
@@ -1395,20 +1395,20 @@
       <div class="screenshot-caption">Official Communication — Compose and send bulk emails</div>
     </div>
     <div class="screenshot-wrapper">
-      <img src="Screenshots/Official Communication dialog(from Sevak Directory).PNG" alt="Official Communication from Sevak Directory" class="screenshot">
-      <div class="screenshot-caption">Official Communication — Initiated from Sevak Directory</div>
+      <img src="Screenshots/Official Communication dialog(from Employee Directory).PNG" alt="Official Communication from Employee Directory" class="screenshot">
+      <div class="screenshot-caption">Official Communication — Initiated from Employee Directory</div>
     </div>
   </div>
 
   <h4>How to Send Bulk Email</h4>
   <ol class="steps">
     <li class="step">
-      <div class="step-title">Navigate to Sevak Directory or Official Communication</div>
-      <div class="step-desc">You can initiate communication from the dedicated page or from the Sevak Directory.</div>
+      <div class="step-title">Navigate to Employee Directory or Official Communication</div>
+      <div class="step-desc">You can initiate communication from the dedicated page or from the Employee Directory.</div>
     </li>
     <li class="step">
       <div class="step-title">Select Recipients</div>
-      <div class="step-desc">Filter by role (all Sevaks, all HODs, all HR, etc.), by department, or manually select individual recipients.</div>
+      <div class="step-desc">Filter by role (all Employees, all HODs, all HR, etc.), by department, or manually select individual recipients.</div>
     </li>
     <li class="step">
       <div class="step-title">Compose Your Message</div>
@@ -1527,7 +1527,7 @@
     <div class="section-title">SuperAdmin <span class="highlight">Features</span></div>
   </div>
 
-  <p>As a SuperAdmin, you have exclusive access to system-level configurations and management features that no other role can access. You also inherit <strong>all features</strong> from Admin, HR, HOD, and Sevak roles.</p>
+  <p>As a SuperAdmin, you have exclusive access to system-level configurations and management features that no other role can access. You also inherit <strong>all features</strong> from Admin, HR, HOD, and Employee roles.</p>
 
   <div class="info-card">
     <div class="info-card-title">ℹ️ Full Access</div>
@@ -1587,7 +1587,7 @@
     </li>
     <li class="step">
       <div class="step-title">Delete Location</div>
-      <div class="step-desc">Click the delete icon to remove a location. You will be asked to confirm. Locations assigned to departments or Sevaks cannot be deleted without reassignment.</div>
+      <div class="step-desc">Click the delete icon to remove a location. You will be asked to confirm. Locations assigned to departments or Employees cannot be deleted without reassignment.</div>
     </li>
     <li class="step">
       <div class="step-title">Map Preview</div>
@@ -1624,7 +1624,7 @@
 
   <div class="info-card">
     <div class="info-card-title">ℹ️ Only SuperAdmins</div>
-    <p>Only SuperAdmins can manage office locations. This ensures coordinate integrity and prevents accidental changes that would affect attendance validation for all Sevaks.</p>
+    <p>Only SuperAdmins can manage office locations. This ensures coordinate integrity and prevents accidental changes that would affect attendance validation for all Employees.</p>
   </div>
 
   <!-- ===== SYSTEM SETTINGS ===== -->
@@ -1637,17 +1637,17 @@
   </div>
 
   <h3 id="sa-geo-threshold">Geo Validation Threshold</h3>
-  <p>Configure the default maximum distance (in meters) that a Sevak can be from their office location during check-in before their attendance is flagged as a "Geo Mismatch."</p>
+  <p>Configure the default maximum distance (in meters) that a Employee can be from their office location during check-in before their attendance is flagged as a "Geo Mismatch."</p>
 
   <ul>
     <li><strong>Default</strong>: Typically set to 100–500 meters depending on office location</li>
     <li><strong>Per-Location Override</strong>: Each location can have its own threshold configured in Locations Management</li>
-    <li><strong>Effect</strong>: If a Sevak checks in from a distance greater than this threshold, their attendance record is flagged for HR review</li>
+    <li><strong>Effect</strong>: If a Employee checks in from a distance greater than this threshold, their attendance record is flagged for HR review</li>
   </ul>
 
   <div class="info-card info">
     <div class="info-card-title">ℹ️ Threshold Behavior</div>
-    <p>The threshold does not <em>block</em> check-in — it only flags the record. This allows Sevaks working from nearby locations or in the field to still check in, while providing HR with visibility into attendance patterns.</p>
+    <p>The threshold does not <em>block</em> check-in — it only flags the record. This allows Employees working from nearby locations or in the field to still check in, while providing HR with visibility into attendance patterns.</p>
   </div>
 
   <h3 id="sa-mail">Mail Configuration (SMTP)</h3>
@@ -1719,19 +1719,19 @@
   </div>
 
   <h3 id="sa-reminder">Attendance Reminder</h3>
-  <p>Configure automated attendance reminders to ensure Sevaks check in on time.</p>
+  <p>Configure automated attendance reminders to ensure Employees check in on time.</p>
 
   <h4>Reminder Settings</h4>
   <ul>
     <li><strong>Enable/Disable Toggle</strong> — Turn attendance reminders on or off system-wide</li>
-    <li><strong>Send Reminder Now</strong> — Manually trigger an immediate reminder to all Sevaks who haven't checked in today</li>
-    <li><strong>Deadline Time Display</strong> — Shows the configured deadline by which Sevaks should check in</li>
+    <li><strong>Send Reminder Now</strong> — Manually trigger an immediate reminder to all Employees who haven't checked in today</li>
+    <li><strong>Deadline Time Display</strong> — Shows the configured deadline by which Employees should check in</li>
     <li><strong>Last Sent Date</strong> — Tracks when the last reminder was sent for auditing</li>
   </ul>
 
   <div class="info-card success">
     <div class="info-card-title">✅ Best Practice</div>
-    <p>Enable attendance reminders and set the deadline to your standard office start time. This helps Sevaks remember to check in and reduces the number of manual attendance corrections HR needs to make.</p>
+    <p>Enable attendance reminders and set the deadline to your standard office start time. This helps Employees remember to check in and reduces the number of manual attendance corrections HR needs to make.</p>
   </div>
 
   <h3 id="sa-maintenance">Week-Off Maintenance</h3>
@@ -1741,7 +1741,7 @@
   <ul>
     <li><strong>Lazy Execution</strong> — The auto-cancel runs automatically on API calls (when someone loads the leaves page, etc.)</li>
     <li><strong>Manual Trigger</strong> — You can manually trigger it from Settings → Week-Off Maintenance</li>
-    <li><strong>Effect</strong> — Any pending week-off swap where the swap date is in the past is automatically cancelled and the Sevak is notified</li>
+    <li><strong>Effect</strong> — Any pending week-off swap where the swap date is in the past is automatically cancelled and the Employee is notified</li>
   </ul>
 
   <div class="info-card info">
@@ -1823,7 +1823,7 @@
 
   <div class="info-card danger">
     <div class="info-card-title">🔴 DANGER — System Data Reset</div>
-    <p><strong>This action is irreversible.</strong> System Data Reset will wipe all application data including Sevak records, leaves, attendance, departments, and configurations. Only use this when absolutely necessary (e.g., testing, data migration, or system overhaul).</p>
+    <p><strong>This action is irreversible.</strong> System Data Reset will wipe all application data including Employee records, leaves, attendance, departments, and configurations. Only use this when absolutely necessary (e.g., testing, data migration, or system overhaul).</p>
     <p><strong>Before proceeding:</strong></p>
     <ul>
       <li>Export all data you need to preserve</li>
@@ -1844,18 +1844,18 @@
   </div>
 
   <div class="faq-item">
-    <div class="faq-question">How do I change a Sevak's default week-off?</div>
+    <div class="faq-question">How do I change a Employee's default week-off?</div>
     <div class="faq-answer">
-      <p><span class="role-badge role-sa">SuperAdmin</span> <span class="role-badge role-admin">Admin</span>: Go to <strong>Sevak Directory → find the Sevak → Edit Profile → modify default week-off</strong>.</p>
-      <p><span class="role-badge role-hr">HR</span>: Go to <strong>Sevak Directory → find the Sevak → Edit Profile → modify</strong>.</p>
-      <p><span class="role-badge role-hod">HOD</span> <span class="role-badge role-sevak">Sevak</span>: Contact <strong>HR</strong> (Admin if HR unavailable) to modify.</p>
+      <p><span class="role-badge role-sa">SuperAdmin</span> <span class="role-badge role-admin">Admin</span>: Go to <strong>Employee Directory → find the Employee → Edit Profile → modify default week-off</strong>.</p>
+      <p><span class="role-badge role-hr">HR</span>: Go to <strong>Employee Directory → find the Employee → Edit Profile → modify</strong>.</p>
+      <p><span class="role-badge role-hod">HOD</span> <span class="role-badge role-employee">Employee</span>: Contact <strong>HR</strong> (Admin if HR unavailable) to modify.</p>
     </div>
   </div>
 
   <div class="faq-item">
     <div class="faq-question">My account is locked. What do I do?</div>
     <div class="faq-answer">
-      <p><span class="role-badge role-sevak">Sevak</span> <span class="role-badge role-hod">HOD</span> <span class="role-badge role-hr">HR</span>: Contact <strong>Admin or SuperAdmin</strong> to unlock.</p>
+      <p><span class="role-badge role-employee">Employee</span> <span class="role-badge role-hod">HOD</span> <span class="role-badge role-hr">HR</span>: Contact <strong>Admin or SuperAdmin</strong> to unlock.</p>
       <p><span class="role-badge role-admin">Admin</span>: Contact <strong>SuperAdmin</strong> to unlock.</p>
       <p><span class="role-badge role-sa">SuperAdmin</span>: Another SuperAdmin can unlock your account, or you can use an alternate SuperAdmin account.</p>
     </div>
@@ -1864,8 +1864,8 @@
   <div class="faq-item">
     <div class="faq-question">How do I change my default week-off day?</div>
     <div class="faq-answer">
-      <p><span class="role-badge role-sevak">Sevak</span> <span class="role-badge role-hod">HOD</span>: Contact <strong>HR</strong> (Admin if HR unavailable).</p>
-      <p><span class="role-badge role-hr">HR</span> <span class="role-badge role-admin">Admin</span> <span class="role-badge role-sa">SuperAdmin</span>: Go to <strong>Sevak Directory → your profile → Edit → modify default week-off</strong>.</p>
+      <p><span class="role-badge role-employee">Employee</span> <span class="role-badge role-hod">HOD</span>: Contact <strong>HR</strong> (Admin if HR unavailable).</p>
+      <p><span class="role-badge role-hr">HR</span> <span class="role-badge role-admin">Admin</span> <span class="role-badge role-sa">SuperAdmin</span>: Go to <strong>Employee Directory → your profile → Edit → modify default week-off</strong>.</p>
     </div>
   </div>
 
@@ -1879,14 +1879,14 @@
   <div class="faq-item">
     <div class="faq-question">Can I approve my own leave request?</div>
     <div class="faq-answer">
-      <p><strong>No.</strong> Sevak/HOD requests go through the HOD → HR approval chain. Your own requests always need higher-level approval. No one can approve their own leave in the system.</p>
+      <p><strong>No.</strong> Employee/HOD requests go through the HOD → HR approval chain. Your own requests always need higher-level approval. No one can approve their own leave in the system.</p>
     </div>
   </div>
 
   <div class="faq-item">
     <div class="faq-question">How do I send a bulk email?</div>
     <div class="faq-answer">
-      <p><span class="role-badge role-hr">HR</span> <span class="role-badge role-admin">Admin</span> <span class="role-badge role-sa">SuperAdmin</span>: Go to <strong>Sevak Directory → Official Communication → select recipients → compose and send</strong>.</p>
+      <p><span class="role-badge role-hr">HR</span> <span class="role-badge role-admin">Admin</span> <span class="role-badge role-sa">SuperAdmin</span>: Go to <strong>Employee Directory → Official Communication → select recipients → compose and send</strong>.</p>
       <p>You can filter recipients by role, department, or manually select individuals.</p>
     </div>
   </div>
@@ -1925,12 +1925,12 @@
     <div class="faq-question">How do I reset the entire system data?</div>
     <div class="faq-answer">
       <p><span class="role-badge role-sa">SuperAdmin only</span>: Go to <strong>My Profile → Danger Zone → System Data Reset</strong>.</p>
-      <p><strong>This is irreversible.</strong> Back up your database before proceeding. All Sevak records, leaves, attendance, and configurations will be permanently deleted.</p>
+      <p><strong>This is irreversible.</strong> Back up your database before proceeding. All Employee records, leaves, attendance, and configurations will be permanently deleted.</p>
     </div>
   </div>
 
   <div class="faq-item">
-    <div class="faq-question">Can I see attendance reports for all Sevaks?</div>
+    <div class="faq-question">Can I see attendance reports for all Employees?</div>
     <div class="faq-answer">
       <p><span class="role-badge role-hr">HR</span> <span class="role-badge role-admin">Admin</span> <span class="role-badge role-sa">SuperAdmin</span>: <strong>Yes.</strong> Go to <strong>Attendance Reports</strong> for compliance reports with geo-mismatch flags. You can filter by date range, department, and export to CSV.</p>
     </div>

@@ -51,7 +51,7 @@ export default function Dashboard() {
       .finally(() => setLoading(false));
   }, []);
 
-  const firstName = user?.first_name || 'Sevak';
+  const firstName = user?.first_name || 'Employee';
 
   return (
     <Box sx={{ maxWidth: 1100, mx: 'auto', width: '100%' }}>
@@ -86,7 +86,7 @@ export default function Dashboard() {
             {warmMsg}
           </Typography>
           <Typography variant="body2" sx={{ opacity: 0.75 }}>
-            {user?.role?.replace('_', ' ')} • Sevak ID: {user?.sevak_id}
+            {user?.role?.replace('_', ' ')} • Employee ID: {user?.employee_id}
           </Typography>
         </Box>
         {/* Decorative circles */}
@@ -216,9 +216,9 @@ export default function Dashboard() {
         <Grid item xs={12} sm={6} md={3}>
           <Card sx={{ borderRadius: 3, bgcolor: '#fff3e0', border: '1px solid #ffe0b2' }}>
             <CardContent>
-              <Typography variant="subtitle2" color="primary.dark" gutterBottom>Sevak ID</Typography>
+              <Typography variant="subtitle2" color="primary.dark" gutterBottom>Employee ID</Typography>
               <Typography variant="h6" fontWeight="bold" color="primary.dark">
-                #{user?.sevak_id}
+                #{user?.employee_id}
               </Typography>
             </CardContent>
           </Card>

@@ -1,12 +1,12 @@
 from fastapi import HTTPException
 
-from app.models.sevak import Sevak
+from app.models.employee import Employee
 from app.services.storage import StoredObject
 
 
-async def _fake_save_document_upload(file, *, sevak_id: str, doc_type: str) -> StoredObject:
+async def _fake_save_document_upload(file, *, employee_id: str, doc_type: str) -> StoredObject:
     return StoredObject(
-        key=f"sevaks/{sevak_id}/{doc_type}/test.pdf",
+        key=f"employees/{employee_id}/{doc_type}/test.pdf",
         content_type="application/pdf",
         filename=f"{doc_type}.pdf",
     )
@@ -32,10 +32,10 @@ def _registration_payload(email: str):
 def test_multiple_pending_onboardings_receive_unique_temporary_ids(
     api_client_factory,
     db_session,
-    make_sevak,
+    make_employee,
     monkeypatch,
 ):
-    current_user = make_sevak(sevak_id=10000, email="super@example.com")
+    current_user = make_employee(employee_id=10000, email="super@example.com")
     monkeypatch.setattr("app.api.onboarding.save_document_upload", _fake_save_document_upload)
     monkeypatch.setattr("app.api.onboarding.send_account_activation_email", lambda **kwargs: True)
     client = api_client_factory(current_user)
@@ -49,19 +49,19 @@ def test_multiple_pending_onboardings_receive_unique_temporary_ids(
     assert first_response.status_code == 200
     assert second_response.status_code == 200
     pending_ids = sorted(
-        row.sevak_id
-        for row in db_session.query(Sevak).filter(Sevak.email.like("%.pending@example.com")).all()
+        row.employee_id
+        for row in db_session.query(Employee).filter(Employee.email.like("%.pending@example.com")).all()
     )
     assert pending_ids == [-2, -1]
 
 
 def test_onboarding_rejects_duplicate_email_case_insensitively(
     api_client_factory,
-    make_sevak,
+    make_employee,
     monkeypatch,
 ):
-    current_user = make_sevak(sevak_id=10000, email="super@example.com")
-    make_sevak(sevak_id=10007, email="teja@example.com")
+    current_user = make_employee(employee_id=10000, email="super@example.com")
+    make_employee(employee_id=10007, email="teja@example.com")
     monkeypatch.setattr("app.api.onboarding.save_document_upload", _fake_save_document_upload)
     monkeypatch.setattr("app.api.onboarding.send_account_activation_email", lambda **kwargs: True)
     client = api_client_factory(current_user)
@@ -77,10 +77,10 @@ def test_onboarding_rejects_duplicate_email_case_insensitively(
 def test_onboarding_stores_normalized_email(
     api_client_factory,
     db_session,
-    make_sevak,
+    make_employee,
     monkeypatch,
 ):
-    current_user = make_sevak(sevak_id=10000, email="super@example.com")
+    current_user = make_employee(employee_id=10000, email="super@example.com")
     monkeypatch.setattr("app.api.onboarding.save_document_upload", _fake_save_document_upload)
     monkeypatch.setattr("app.api.onboarding.send_account_activation_email", lambda **kwargs: True)
     client = api_client_factory(current_user)
@@ -90,16 +90,16 @@ def test_onboarding_stores_normalized_email(
     response = client.post("/api/onboarding/register", data=data, files=files)
 
     assert response.status_code == 200
-    created = db_session.query(Sevak).filter(Sevak.email == "new.user@example.com").one()
+    created = db_session.query(Employee).filter(Employee.email == "new.user@example.com").one()
     assert created.email == "new.user@example.com"
 
 
 def test_onboarding_returns_storage_errors_without_crashing(
     api_client_factory,
-    make_sevak,
+    make_employee,
     monkeypatch,
 ):
-    current_user = make_sevak(sevak_id=10000, email="super@example.com")
+    current_user = make_employee(employee_id=10000, email="super@example.com")
 
     async def fail_upload(*args, **kwargs):
         raise HTTPException(

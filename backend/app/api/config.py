@@ -1,8 +1,8 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from typing import List, Optional
-from app.core.dependencies import DbSession, CurrentSevak
+from app.core.dependencies import DbSession, CurrentEmployee
 from app.models.department import SystemConfig, ConfigAccessLevel
-from app.models.sevak import RoleEnum
+from app.models.employee import RoleEnum
 from app.services.notifications import send_test_email, get_official_communication_email
 from pydantic import BaseModel
 
@@ -52,7 +52,7 @@ def _upsert_config(db, key: str, value: str, description: str, access_level: Con
     return config
 
 @router.get("/")
-def get_configs(db: DbSession, current_user: CurrentSevak):
+def get_configs(db: DbSession, current_user: CurrentEmployee):
     """Get all system configurations. HR, Admin, SuperAdmin only."""
     if current_user.role not in [RoleEnum.HR, RoleEnum.ADMIN, RoleEnum.SUPER_ADMIN]:
         raise HTTPException(
@@ -68,7 +68,7 @@ def get_configs(db: DbSession, current_user: CurrentSevak):
     } for c in configs if c.key != "SMTP_PASSWORD"]
 
 @router.get("/mail")
-def get_mail_config(db: DbSession, current_user: CurrentSevak):
+def get_mail_config(db: DbSession, current_user: CurrentEmployee):
     """Get mail settings for Super Admin."""
     if current_user.role != RoleEnum.SUPER_ADMIN:
         raise HTTPException(
@@ -105,7 +105,7 @@ def get_mail_config(db: DbSession, current_user: CurrentSevak):
 
 
 @router.put("/mail")
-def update_mail_config(request: MailConfigUpdate, db: DbSession, current_user: CurrentSevak):
+def update_mail_config(request: MailConfigUpdate, db: DbSession, current_user: CurrentEmployee):
     """Update mail settings for Super Admin."""
     if current_user.role != RoleEnum.SUPER_ADMIN:
         raise HTTPException(
@@ -134,7 +134,7 @@ def update_mail_config(request: MailConfigUpdate, db: DbSession, current_user: C
 
 
 @router.post("/mail/test")
-def test_mail_config(request: MailTestRequest, db: DbSession, current_user: CurrentSevak):
+def test_mail_config(request: MailTestRequest, db: DbSession, current_user: CurrentEmployee):
     """Send a test email using the configured outbound mail settings."""
     if current_user.role != RoleEnum.SUPER_ADMIN:
         raise HTTPException(
@@ -165,7 +165,7 @@ def test_mail_config(request: MailTestRequest, db: DbSession, current_user: Curr
 
 
 @router.get("/{key}")
-def get_config_by_key(key: str, db: DbSession, current_user: CurrentSevak):
+def get_config_by_key(key: str, db: DbSession, current_user: CurrentEmployee):
     """Get a specific configuration by key. HR, Admin, SuperAdmin only."""
     if current_user.role not in [RoleEnum.HR, RoleEnum.ADMIN, RoleEnum.SUPER_ADMIN]:
         raise HTTPException(
@@ -184,7 +184,7 @@ def get_config_by_key(key: str, db: DbSession, current_user: CurrentSevak):
 
 
 @router.put("/update")
-def update_config(request: ConfigUpdate, db: DbSession, current_user: CurrentSevak):
+def update_config(request: ConfigUpdate, db: DbSession, current_user: CurrentEmployee):
     """Update a system configuration. HR, Admin, SuperAdmin only."""
     if current_user.role not in [RoleEnum.HR, RoleEnum.ADMIN, RoleEnum.SUPER_ADMIN]:
         raise HTTPException(

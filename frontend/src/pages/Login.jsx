@@ -39,7 +39,7 @@ export default function Login() {
 
     const cleanIdentifier = identifier.trim();
     if (!cleanIdentifier || !password) {
-      setError('Please enter both Sevak ID / Email and Password.');
+      setError('Please enter both Employee ID / Email and Password.');
       return;
     }
 
@@ -110,7 +110,7 @@ export default function Login() {
               required
               fullWidth
               id="identifier"
-              label="Sevak ID or Email"
+              label="Employee ID or Email"
               name="identifier"
               autoComplete="username"
               autoFocus

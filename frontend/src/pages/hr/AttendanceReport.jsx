@@ -29,7 +29,7 @@ const buildSummaryFromRows = (rows, month, year) => {
   const safeRows = Array.isArray(rows) ? rows : [];
   const missedAttendance = safeRows.reduce((total, row) => total + Number(row.absent_days || 0), 0);
   const geoMismatch = safeRows.reduce((total, row) => total + Number(row.geo_mismatch || 0), 0);
-  const uniqueSevaks = safeRows.filter(
+  const uniqueEmployees = safeRows.filter(
     (row) => Number(row.absent_days || 0) > 0 || Number(row.geo_mismatch || 0) > 0
   ).length;
   const startDate = new Date(year, month - 1, 1);
@@ -39,7 +39,7 @@ const buildSummaryFromRows = (rows, month, year) => {
     total_records: missedAttendance + geoMismatch,
     missed_attendance: missedAttendance,
     geo_mismatch: geoMismatch,
-    unique_sevaks: uniqueSevaks,
+    unique_employees: uniqueEmployees,
     period: `${startDate.toLocaleDateString('en-GB')} to ${endDate.toLocaleDateString('en-GB')}`,
   };
 };
@@ -331,8 +331,8 @@ export default function AttendanceReport() {
             <Card sx={{ borderRadius: 3, border: '1px solid #eee' }}>
               <CardContent sx={{ p: 2, textAlign: 'center' }}>
                 <PeopleIcon sx={{ fontSize: 32, color: 'primary.main', mb: 1 }} />
-                <Typography variant="h5" fontWeight="bold">{summary.unique_sevaks}</Typography>
-                <Typography variant="caption" color="text.secondary" display="block">Affected Sevaks Count</Typography>
+                <Typography variant="h5" fontWeight="bold">{summary.unique_employees}</Typography>
+                <Typography variant="caption" color="text.secondary" display="block">Affected Employees Count</Typography>
               </CardContent>
             </Card>
           </Grid>
@@ -346,7 +346,7 @@ export default function AttendanceReport() {
             <Table stickyHeader size="small">
               <TableHead>
                 <TableRow>
-                  <TableCell sx={{ bgcolor: '#f47c20', color: 'white', fontWeight: 'bold' }}>Sevak ID</TableCell>
+                  <TableCell sx={{ bgcolor: '#f47c20', color: 'white', fontWeight: 'bold' }}>Employee ID</TableCell>
                   <TableCell sx={{ bgcolor: '#f47c20', color: 'white', fontWeight: 'bold' }}>Name</TableCell>
                   <TableCell sx={{ bgcolor: '#f47c20', color: 'white', fontWeight: 'bold', textAlign: 'center' }}>Present</TableCell>
                   <TableCell sx={{ bgcolor: '#f47c20', color: 'white', fontWeight: 'bold', textAlign: 'center' }}>Leave</TableCell>
@@ -358,8 +358,8 @@ export default function AttendanceReport() {
               </TableHead>
               <TableBody>
                 {reportData.map((row) => (
-                  <TableRow key={row.sevak_db_id} hover>
-                    <TableCell fontWeight={600}>{row.sevak_id}</TableCell>
+                  <TableRow key={row.employee_db_id} hover>
+                    <TableCell fontWeight={600}>{row.employee_id}</TableCell>
                     <TableCell>{row.name}</TableCell>
                     <TableCell sx={{ textAlign: 'center' }}>
                       <Chip label={row.present} size="small" sx={{ bgcolor: '#e8f5e9', color: '#2e7d32', fontWeight: 700 }} />
@@ -383,7 +383,7 @@ export default function AttendanceReport() {
                           variant="text"
                           startIcon={<HistoryIcon />}
                           component={Link}
-                          to={`/directory/${row.sevak_db_id}/sevak-records`}
+                          to={`/directory/${row.employee_db_id}/employee-records`}
                           state={{
                             month: displayDate.month,
                             year: displayDate.year,
@@ -408,7 +408,7 @@ export default function AttendanceReport() {
                           startIcon={<EventAvailableIcon />}
                           color="secondary"
                           component={Link}
-                          to={`/directory/${row.sevak_db_id}/sevak-records`}
+                          to={`/directory/${row.employee_db_id}/employee-records`}
                           state={{
                             month: displayDate.month,
                             year: displayDate.year,

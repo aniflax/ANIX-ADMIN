@@ -26,29 +26,29 @@ describe('AccountManagement', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     apiGet.mockImplementation((url) => {
-      if (url === '/api/sevaks/admin/accounts') {
+      if (url === '/api/employees/admin/accounts') {
         return Promise.resolve({
           data: [
             {
-              id: 'sevak-1',
-              sevak_id: 10006,
+              id: 'employee-1',
+              employee_id: 10006,
               first_name: 'Teja',
               last_name: 'Krishna',
-              email: 'sevak@example.com',
+              email: 'employee@example.com',
               email_verified: true,
-              role: 'SEVAK',
+              role: 'EMPLOYEE',
               status: 'ACTIVE',
               failed_login_attempts: 0,
               last_login: null,
             },
             {
-              id: 'sevak-2',
-              sevak_id: 10007,
+              id: 'employee-2',
+              employee_id: 10007,
               first_name: 'Pending',
               last_name: 'User',
               email: 'pending@example.com',
               email_verified: false,
-              role: 'SEVAK',
+              role: 'EMPLOYEE',
               status: 'ACTIVE',
               failed_login_attempts: 1,
               last_login: null,
@@ -56,15 +56,15 @@ describe('AccountManagement', () => {
           ],
         });
       }
-      if (url === '/api/sevaks/admin/locked-list') {
+      if (url === '/api/employees/admin/locked-list') {
         return Promise.resolve({
           data: [
             {
               id: 'locked-1',
-              sevak_id: 10006,
+              employee_id: 10006,
               first_name: 'Teja',
               last_name: 'Krishna',
-              email: 'sevak@example.com',
+              email: 'employee@example.com',
               email_verified: true,
               phone: '9999999999',
               lock_reason: 'Too many attempts',
@@ -74,13 +74,13 @@ describe('AccountManagement', () => {
           ],
         });
       }
-      if (url === '/api/sevaks/admin/delete-requests') {
+      if (url === '/api/employees/admin/delete-requests') {
         return Promise.resolve({ data: [] });
       }
       return Promise.resolve({ data: [] });
     });
     apiPost.mockImplementation((url) => {
-      if (url === '/api/sevaks/admin/accounts/otp/send') {
+      if (url === '/api/employees/admin/accounts/otp/send') {
         return Promise.resolve({
           data: {
             email: 'admin@example.com',
@@ -89,7 +89,7 @@ describe('AccountManagement', () => {
           },
         });
       }
-      if (url === '/api/sevaks/admin/accounts/otp/verify') {
+      if (url === '/api/employees/admin/accounts/otp/verify') {
         return Promise.resolve({
           data: {
             email: 'admin@example.com',
@@ -98,12 +98,12 @@ describe('AccountManagement', () => {
           },
         });
       }
-      if (url === '/api/sevaks/admin/accounts') {
+      if (url === '/api/employees/admin/accounts') {
         return Promise.resolve({
           data: {
             account: {
               id: 'admin-1',
-              sevak_id: 10001,
+              employee_id: 10001,
               first_name: 'Admin',
               last_name: 'User',
               email: 'admin@example.com',
@@ -143,7 +143,7 @@ describe('AccountManagement', () => {
     fireEvent.click(screen.getByRole('button', { name: /Send OTP/i }));
 
     await waitFor(() => {
-      expect(apiPost).toHaveBeenCalledWith('/api/sevaks/admin/accounts/otp/send', {
+      expect(apiPost).toHaveBeenCalledWith('/api/employees/admin/accounts/otp/send', {
         email: 'admin@example.com',
       }, { skipAuthLogout: true });
     });
@@ -152,7 +152,7 @@ describe('AccountManagement', () => {
     fireEvent.click(screen.getByRole('button', { name: /Verify OTP/i }));
 
     await waitFor(() => {
-      expect(apiPost).toHaveBeenCalledWith('/api/sevaks/admin/accounts/otp/verify', {
+      expect(apiPost).toHaveBeenCalledWith('/api/employees/admin/accounts/otp/verify', {
         email: 'admin@example.com',
         otp: '123456',
         otp_token: 'otp-token',
@@ -165,7 +165,7 @@ describe('AccountManagement', () => {
     fireEvent.click(screen.getByRole('button', { name: /Create Account/i }));
 
     await waitFor(() => {
-      expect(apiPost).toHaveBeenCalledWith('/api/sevaks/admin/accounts', {
+      expect(apiPost).toHaveBeenCalledWith('/api/employees/admin/accounts', {
         account_id: null,
         role: 'HR',
         first_name: 'Admin',
@@ -180,7 +180,7 @@ describe('AccountManagement', () => {
     expect(screen.getByText('TempPass123')).toBeInTheDocument();
     fireEvent.click(screen.getByRole('button', { name: /Mail Login Details/i }));
     await waitFor(() => {
-      expect(apiPost).toHaveBeenCalledWith('/api/sevaks/admin/accounts/admin-1/send-credentials', {
+      expect(apiPost).toHaveBeenCalledWith('/api/employees/admin/accounts/admin-1/send-credentials', {
         temporary_password: 'TempPass123',
       }, { skipAuthLogout: true });
     });
@@ -191,6 +191,6 @@ describe('AccountManagement', () => {
 
     fireEvent.click(await screen.findByLabelText(/Actions for Teja Krishna/i));
     const profileLink = await screen.findByRole('menuitem', { name: /Profile/i });
-    expect(profileLink).toHaveAttribute('href', '/profile/sevak-1');
+    expect(profileLink).toHaveAttribute('href', '/profile/employee-1');
   });
 });

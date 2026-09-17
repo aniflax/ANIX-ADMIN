@@ -41,7 +41,7 @@ export default function ApplyLeave() {
       setLeaveTypes(typesRes.data);
       setBalances(balancesRes.data);
       // Filter history down to just my requests, sorted by recent
-      const myReqs = historyRes.data.filter(r => r.sevak_id === user.id).reverse();
+      const myReqs = historyRes.data.filter(r => r.employee_id === user.id).reverse();
       setHistory(myReqs);
     } catch {
       setError('Failed to fetch data');

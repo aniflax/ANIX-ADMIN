@@ -6,20 +6,20 @@ from pydantic import BaseModel
 import json
 import anyio
 from queue import Empty
-from app.core.dependencies import DbSession, CurrentSevak
+from app.core.dependencies import DbSession, CurrentEmployee
 from app.schemas.attendance import AttendanceMarkRequest, AttendanceResponse, AttendanceManualUpdate
 from app.services.attendance import (
     mark_attendance, mark_week_off, get_weekly_flagged_attendance, 
     get_weekly_attendance, manual_update_attendance,
     is_attendance_reminder_enabled, set_attendance_reminder,
-    get_sevaks_without_attendance_today, get_local_today, get_attendance_deadline,
+    get_employees_without_attendance_today, get_local_today, get_attendance_deadline,
     get_attendance_reminder_last_sent,
     get_non_compliant_attendance, generate_non_compliant_excel, get_non_compliant_summary,
     serialize_attendance_log
 )
 from app.services.notifications import process_attendance_reminders
 from app.services.notifications import get_official_communication_email
-from app.models.sevak import RoleEnum, Sevak
+from app.models.employee import RoleEnum, Employee
 from app.models.attendance import AttendanceLog
 from app.services.attendance_realtime import register_attendance_subscriber, unregister_attendance_subscriber
 
@@ -32,12 +32,12 @@ class ReminderToggleRequest(BaseModel):
     enabled: bool
 
 @router.post("/mark", response_model=AttendanceResponse)
-def act_mark_attendance(request_data: AttendanceMarkRequest, db: DbSession, current_user: CurrentSevak):
+def act_mark_attendance(request_data: AttendanceMarkRequest, db: DbSession, current_user: CurrentEmployee):
     """Mark attendance for the current day."""
     return mark_attendance(db=db, request=request_data, current_user=current_user)
 
 @router.get("/stream")
-async def attendance_stream(current_user: CurrentSevak):
+async def attendance_stream(current_user: CurrentEmployee):
     """Real-time attendance change stream for browser clients."""
     subscriber = register_attendance_subscriber()
 
@@ -60,12 +60,12 @@ async def attendance_stream(current_user: CurrentSevak):
     })
 
 @router.post("/week-off", response_model=AttendanceResponse)
-def act_mark_week_off(request_data: WeekOffRequest, db: DbSession, current_user: CurrentSevak):
+def act_mark_week_off(request_data: WeekOffRequest, db: DbSession, current_user: CurrentEmployee):
     """Mark a day as week-off."""
     return mark_week_off(db=db, target_date=request_data.target_date, current_user=current_user)
 
 @router.get("/reports/geo-mismatch", response_model=List[AttendanceResponse])
-def fetch_mismatch_report(db: DbSession, current_user: CurrentSevak):
+def fetch_mismatch_report(db: DbSession, current_user: CurrentEmployee):
     """Fetch geo-mismatch flagged records for the week. HR and Admin only."""
     if current_user.role not in [RoleEnum.HR, RoleEnum.ADMIN, RoleEnum.SUPER_ADMIN]:
         raise HTTPException(
@@ -75,7 +75,7 @@ def fetch_mismatch_report(db: DbSession, current_user: CurrentSevak):
     return get_weekly_flagged_attendance(db=db)
 
 @router.get("/reports/all", response_model=List[AttendanceResponse])
-def fetch_all_weekly_report(db: DbSession, current_user: CurrentSevak):
+def fetch_all_weekly_report(db: DbSession, current_user: CurrentEmployee):
     """Fetch all attendance records for the week. HR and Admin only."""
     if current_user.role not in [RoleEnum.HR, RoleEnum.ADMIN, RoleEnum.SUPER_ADMIN]:
         raise HTTPException(
@@ -85,15 +85,15 @@ def fetch_all_weekly_report(db: DbSession, current_user: CurrentSevak):
     return get_weekly_attendance(db=db)
 
 @router.get("/history", response_model=List[AttendanceResponse])
-def fetch_own_history(db: DbSession, current_user: CurrentSevak):
+def fetch_own_history(db: DbSession, current_user: CurrentEmployee):
     """Fetch attendance history for the logged-in user."""
     logs = db.query(AttendanceLog).filter(
-        AttendanceLog.sevak_id == current_user.id
+        AttendanceLog.employee_id == current_user.id
     ).order_by(AttendanceLog.date.desc()).all()
     return [serialize_attendance_log(db, log, current_user) for log in logs]
 
 @router.get("/history/monthly", response_model=List[AttendanceResponse])
-def fetch_monthly_history(db: DbSession, current_user: CurrentSevak, year: int = None, month: int = None):
+def fetch_monthly_history(db: DbSession, current_user: CurrentEmployee, year: int = None, month: int = None):
     """Fetch monthly attendance history for the logged-in user."""
     if year is None:
         year = get_local_today().year
@@ -108,36 +108,36 @@ def fetch_monthly_history(db: DbSession, current_user: CurrentSevak, year: int =
         end_date = date(year, month + 1, 1) - timedelta(days=1)
     
     logs = db.query(AttendanceLog).filter(
-        AttendanceLog.sevak_id == current_user.id,
+        AttendanceLog.employee_id == current_user.id,
         AttendanceLog.date >= start_date,
         AttendanceLog.date <= end_date
     ).order_by(AttendanceLog.date.desc()).all()
     return [serialize_attendance_log(db, log, current_user) for log in logs]
 
 
-@router.get("/history/sevak/{sevak_id}", response_model=List[AttendanceResponse])
-def fetch_sevak_history(
-    sevak_id: str,
+@router.get("/history/employee/{employee_id}", response_model=List[AttendanceResponse])
+def fetch_employee_history(
+    employee_id: str,
     db: DbSession,
-    current_user: CurrentSevak,
+    current_user: CurrentEmployee,
     year: int = None,
     month: int = None,
 ):
-    """Fetch attendance history for a specific sevak with role-based access control."""
-    target_sevak = db.query(Sevak).filter(Sevak.id == sevak_id).first()
-    if not target_sevak:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Sevak not found")
+    """Fetch attendance history for a specific employee with role-based access control."""
+    target_employee = db.query(Employee).filter(Employee.id == employee_id).first()
+    if not target_employee:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Employee not found")
 
-    if current_user.role == RoleEnum.SEVAK and current_user.id != sevak_id:
+    if current_user.role == RoleEnum.EMPLOYEE and current_user.id != employee_id:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Not authorized to view this attendance history")
 
-    if current_user.role == RoleEnum.HOD and current_user.department_id != target_sevak.department_id:
+    if current_user.role == RoleEnum.HOD and current_user.department_id != target_employee.department_id:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Not authorized to view this attendance history")
 
-    if current_user.role not in [RoleEnum.SEVAK, RoleEnum.HOD, RoleEnum.HR, RoleEnum.ADMIN, RoleEnum.SUPER_ADMIN]:
+    if current_user.role not in [RoleEnum.EMPLOYEE, RoleEnum.HOD, RoleEnum.HR, RoleEnum.ADMIN, RoleEnum.SUPER_ADMIN]:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Not authorized to view this attendance history")
 
-    query = db.query(AttendanceLog).filter(AttendanceLog.sevak_id == sevak_id)
+    query = db.query(AttendanceLog).filter(AttendanceLog.employee_id == employee_id)
     if year is not None and month is not None:
         start_date = date(year, month, 1)
         if month == 12:
@@ -147,11 +147,11 @@ def fetch_sevak_history(
         query = query.filter(AttendanceLog.date >= start_date, AttendanceLog.date <= end_date)
 
     logs = query.order_by(AttendanceLog.date.desc()).all()
-    return [serialize_attendance_log(db, log, target_sevak) for log in logs]
+    return [serialize_attendance_log(db, log, target_employee) for log in logs]
 
 @router.post("/manual-update", response_model=AttendanceResponse)
-def act_manual_update_attendance(request_data: AttendanceManualUpdate, db: DbSession, current_user: CurrentSevak):
-    """Admin/HOD: Manually update or create attendance for a Sevak on a specific date."""
+def act_manual_update_attendance(request_data: AttendanceManualUpdate, db: DbSession, current_user: CurrentEmployee):
+    """Admin/HOD: Manually update or create attendance for a Employee on a specific date."""
     if current_user.role not in [RoleEnum.ADMIN, RoleEnum.SUPER_ADMIN, RoleEnum.HOD, RoleEnum.HR]:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN, 
@@ -161,7 +161,7 @@ def act_manual_update_attendance(request_data: AttendanceManualUpdate, db: DbSes
 
 # Attendance Reminder Endpoints (Super Admin only)
 @router.get("/reminder/status")
-def get_reminder_status(db: DbSession, current_user: CurrentSevak):
+def get_reminder_status(db: DbSession, current_user: CurrentEmployee):
     """Get attendance reminder status. Super Admin only."""
     if current_user.role != RoleEnum.SUPER_ADMIN:
         raise HTTPException(
@@ -183,7 +183,7 @@ def get_reminder_status(db: DbSession, current_user: CurrentSevak):
     }
 
 @router.post("/reminder/toggle")
-def toggle_reminder(request: ReminderToggleRequest, db: DbSession, current_user: CurrentSevak):
+def toggle_reminder(request: ReminderToggleRequest, db: DbSession, current_user: CurrentEmployee):
     """Enable or disable attendance reminder. Super Admin only."""
     if current_user.role != RoleEnum.SUPER_ADMIN:
         raise HTTPException(
@@ -195,7 +195,7 @@ def toggle_reminder(request: ReminderToggleRequest, db: DbSession, current_user:
 
 
 @router.post("/reminder/send-now")
-def send_reminder_now(db: DbSession, current_user: CurrentSevak):
+def send_reminder_now(db: DbSession, current_user: CurrentEmployee):
     """Force send attendance reminder emails immediately. Super Admin only."""
     if current_user.role != RoleEnum.SUPER_ADMIN:
         raise HTTPException(
@@ -205,15 +205,15 @@ def send_reminder_now(db: DbSession, current_user: CurrentSevak):
     return process_attendance_reminders(db, force=True)
 
 @router.get("/reminder/pending")
-def get_pending_attendance(db: DbSession, current_user: CurrentSevak):
-    """Get list of sevaks who haven't marked attendance today. Super Admin only."""
+def get_pending_attendance(db: DbSession, current_user: CurrentEmployee):
+    """Get list of employees who haven't marked attendance today. Super Admin only."""
     if current_user.role != RoleEnum.SUPER_ADMIN:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Only Super Admin can view pending attendance"
         )
-    pending = get_sevaks_without_attendance_today(db)
-    return [{"id": s.id, "name": f"{s.first_name} {s.last_name}", "sevak_id": s.sevak_id} for s in pending]
+    pending = get_employees_without_attendance_today(db)
+    return [{"id": s.id, "name": f"{s.first_name} {s.last_name}", "employee_id": s.employee_id} for s in pending]
 
 
 # Attendance Report Endpoints
@@ -222,7 +222,7 @@ class MonthReportRequest(BaseModel):
     month: int
 
 @router.post("/reports/non-compliant")
-def get_non_compliant_report(request: MonthReportRequest, db: DbSession, current_user: CurrentSevak):
+def get_non_compliant_report(request: MonthReportRequest, db: DbSession, current_user: CurrentEmployee):
     """Get attendance exception records for a month. HR and Admin only."""
     if current_user.role not in [RoleEnum.HR, RoleEnum.ADMIN, RoleEnum.SUPER_ADMIN]:
         raise HTTPException(
@@ -239,8 +239,8 @@ def get_non_compliant_report(request: MonthReportRequest, db: DbSession, current
     return get_non_compliant_attendance(db, start_date, end_date)
 
 @router.post("/reports/non-compliant/aggregated")
-def get_monthly_aggregated(request: MonthReportRequest, db: DbSession, current_user: CurrentSevak):
-    """Get aggregated monthly attendance (Present, Leave, Absent) per Sevak. HR/Admin only."""
+def get_monthly_aggregated(request: MonthReportRequest, db: DbSession, current_user: CurrentEmployee):
+    """Get aggregated monthly attendance (Present, Leave, Absent) per Employee. HR/Admin only."""
     if current_user.role not in [RoleEnum.HR, RoleEnum.ADMIN, RoleEnum.SUPER_ADMIN]:
         raise HTTPException(status_code=403, detail="Not authorized")
     
@@ -248,7 +248,7 @@ def get_monthly_aggregated(request: MonthReportRequest, db: DbSession, current_u
     return get_monthly_aggregated_report(db, request.year, request.month)
 
 @router.post("/reports/non-compliant/summary")
-def get_non_compliant_summary_report(request: MonthReportRequest, db: DbSession, current_user: CurrentSevak):
+def get_non_compliant_summary_report(request: MonthReportRequest, db: DbSession, current_user: CurrentEmployee):
     """Get summary statistics for attendance exceptions. HR and Admin only."""
     if current_user.role not in [RoleEnum.HR, RoleEnum.ADMIN, RoleEnum.SUPER_ADMIN]:
         raise HTTPException(
@@ -265,7 +265,7 @@ def get_non_compliant_summary_report(request: MonthReportRequest, db: DbSession,
     return get_non_compliant_summary(db, start_date, end_date)
 
 @router.post("/reports/non-compliant/export")
-def export_non_compliant_excel(request: MonthReportRequest, db: DbSession, current_user: CurrentSevak):
+def export_non_compliant_excel(request: MonthReportRequest, db: DbSession, current_user: CurrentEmployee):
     """Export the attendance report as Excel with Summary and Detailed sheets."""
     if current_user.role not in [RoleEnum.HR, RoleEnum.ADMIN, RoleEnum.SUPER_ADMIN]:
         raise HTTPException(
@@ -288,9 +288,9 @@ def export_non_compliant_excel(request: MonthReportRequest, db: DbSession, curre
         headers={"Content-Disposition": f"attachment; filename={filename}"}
     )
 
-# Sevak Location Management Endpoints
-class SevakLocationRequest(BaseModel):
-    sevak_id: str
+# Employee Location Management Endpoints
+class EmployeeLocationRequest(BaseModel):
+    employee_id: str
     department_id: str
     location_name: Optional[str] = None
     location_lat: float
@@ -298,15 +298,15 @@ class SevakLocationRequest(BaseModel):
     is_primary: bool = False
 
 @router.post("/locations/assign")
-def assign_sevak_location(request: SevakLocationRequest, db: DbSession, current_user: CurrentSevak):
-    """Assign a location to a sevak. HR and Admin only."""
+def assign_employee_location(request: EmployeeLocationRequest, db: DbSession, current_user: CurrentEmployee):
+    """Assign a location to a employee. HR and Admin only."""
     if current_user.role not in [RoleEnum.HR, RoleEnum.ADMIN, RoleEnum.SUPER_ADMIN]:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Not authorized to assign locations")
     
-    from app.models.sevak_location import SevakLocation
+    from app.models.employee_location import EmployeeLocation
     
-    new_location = SevakLocation(
-        sevak_id=request.sevak_id,
+    new_location = EmployeeLocation(
+        employee_id=request.employee_id,
         department_id=request.department_id,
         location_name=request.location_name,
         location_lat=request.location_lat,
@@ -318,14 +318,14 @@ def assign_sevak_location(request: SevakLocationRequest, db: DbSession, current_
     db.refresh(new_location)
     return {"message": "Location assigned successfully", "id": new_location.id}
 
-@router.get("/locations/sevak/{sevak_id}")
-def get_sevak_locations(sevak_id: str, db: DbSession, current_user: CurrentSevak):
-    """Get all locations assigned to a sevak."""
-    from app.models.sevak_location import SevakLocation
+@router.get("/locations/employee/{employee_id}")
+def get_employee_locations(employee_id: str, db: DbSession, current_user: CurrentEmployee):
+    """Get all locations assigned to a employee."""
+    from app.models.employee_location import EmployeeLocation
     
-    locations = db.query(SevakLocation).filter(
-        SevakLocation.sevak_id == sevak_id,
-        SevakLocation.is_active == True
+    locations = db.query(EmployeeLocation).filter(
+        EmployeeLocation.employee_id == employee_id,
+        EmployeeLocation.is_active == True
     ).all()
     
     return [{
@@ -338,14 +338,14 @@ def get_sevak_locations(sevak_id: str, db: DbSession, current_user: CurrentSevak
     } for loc in locations]
 
 @router.delete("/locations/{location_id}")
-def remove_sevak_location(location_id: str, db: DbSession, current_user: CurrentSevak):
-    """Remove a location assignment from a sevak. HR and Admin only."""
+def remove_employee_location(location_id: str, db: DbSession, current_user: CurrentEmployee):
+    """Remove a location assignment from a employee. HR and Admin only."""
     if current_user.role not in [RoleEnum.HR, RoleEnum.ADMIN, RoleEnum.SUPER_ADMIN]:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Not authorized to remove locations")
     
-    from app.models.sevak_location import SevakLocation
+    from app.models.employee_location import EmployeeLocation
     
-    location = db.query(SevakLocation).filter(SevakLocation.id == location_id).first()
+    location = db.query(EmployeeLocation).filter(EmployeeLocation.id == location_id).first()
     if not location:
         raise HTTPException(status_code=404, detail="Location not found")
     

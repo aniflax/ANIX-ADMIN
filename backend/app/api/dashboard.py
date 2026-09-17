@@ -1,8 +1,8 @@
 from fastapi import APIRouter
 from datetime import datetime, date, timedelta
-from app.core.dependencies import DbSession, CurrentSevak
+from app.core.dependencies import DbSession, CurrentEmployee
 from app.models.leave import LeaveRequest, LeaveRequestStatus
-from app.models.sevak import Sevak, RoleEnum
+from app.models.employee import Employee, RoleEnum
 from typing import Optional
 
 router = APIRouter(prefix="/api/dashboard", tags=["Dashboard"])
@@ -378,7 +378,7 @@ GURUDEV_QUOTES = [
 
 
 @router.get("/events")
-def get_dashboard_events(db: DbSession, current_user: CurrentSevak):
+def get_dashboard_events(db: DbSession, current_user: CurrentEmployee):
     """Return today's events, upcoming leaves, and a daily Gurudev quote for the dashboard."""
     today = date.today()
     day_of_year = today.timetuple().tm_yday
@@ -397,7 +397,7 @@ def get_dashboard_events(db: DbSession, current_user: CurrentSevak):
     # ── Upcoming leave for current user (next 7 days) ──
     next_week = today + timedelta(days=7)
     upcoming = db.query(LeaveRequest).filter(
-        LeaveRequest.sevak_id == current_user.id,
+        LeaveRequest.employee_id == current_user.id,
         LeaveRequest.status == LeaveRequestStatus.APPROVED,
         LeaveRequest.start_date >= today,
         LeaveRequest.start_date <= next_week
@@ -420,36 +420,36 @@ def get_dashboard_events(db: DbSession, current_user: CurrentSevak):
             LeaveRequest.total_days >= 3
         )
         if current_user.role == RoleEnum.HOD:
-            dept_sevak_ids = [
-                s.id for s in db.query(Sevak).filter(Sevak.department_id == current_user.department_id).all()
+            dept_employee_ids = [
+                s.id for s in db.query(Employee).filter(Employee.department_id == current_user.department_id).all()
             ]
-            query = query.filter(LeaveRequest.sevak_id.in_(dept_sevak_ids))
+            query = query.filter(LeaveRequest.employee_id.in_(dept_employee_ids))
 
         long_leaves_today = query.all()
         for lr in long_leaves_today:
-            sevak = db.query(Sevak).filter(Sevak.id == lr.sevak_id).first()
-            if sevak:
+            employee = db.query(Employee).filter(Employee.id == lr.employee_id).first()
+            if employee:
                 events.append({
                     "type": "LONG_LEAVE_START",
-                    "message": f"{sevak.first_name} {sevak.last_name}'s {lr.total_days}-day leave starts today.",
-                    "sevak_name": f"{sevak.first_name} {sevak.last_name}",
+                    "message": f"{employee.first_name} {employee.last_name}'s {lr.total_days}-day leave starts today.",
+                    "employee_name": f"{employee.first_name} {employee.last_name}",
                 })
 
-        # Birthdays today (all sevaks for HR/Admin, dept only for HOD)
-        sevak_query = db.query(Sevak).filter(
-            Sevak.date_of_birth != None
+        # Birthdays today (all employees for HR/Admin, dept only for HOD)
+        employee_query = db.query(Employee).filter(
+            Employee.date_of_birth != None
         )
         if current_user.role == RoleEnum.HOD:
-            sevak_query = sevak_query.filter(Sevak.department_id == current_user.department_id)
+            employee_query = employee_query.filter(Employee.department_id == current_user.department_id)
 
-        all_sevaks = sevak_query.all()
-        for s in all_sevaks:
+        all_employees = employee_query.all()
+        for s in all_employees:
             if s.date_of_birth and s.date_of_birth.month == today.month and s.date_of_birth.day == today.day:
                 if s.id != current_user.id:
                     events.append({
                         "type": "BIRTHDAY",
                         "message": f"Today is {s.first_name} {s.last_name}'s birthday! 🎂",
-                        "sevak_name": f"{s.first_name} {s.last_name}",
+                        "employee_name": f"{s.first_name} {s.last_name}",
                     })
 
     return {

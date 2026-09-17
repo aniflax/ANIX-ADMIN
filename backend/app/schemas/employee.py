@@ -1,19 +1,19 @@
 from typing import Optional
 from pydantic import BaseModel, Field
 from datetime import date, datetime
-from app.models.sevak import RoleEnum, SevakStatusEnum
+from app.models.employee import RoleEnum, EmployeeStatusEnum
 
-class SevakBase(BaseModel):
+class EmployeeBase(BaseModel):
     first_name: str = Field(..., max_length=100)
     last_name: str = Field(..., max_length=100)
     email: Optional[str] = None
-    role: RoleEnum = RoleEnum.SEVAK
+    role: RoleEnum = RoleEnum.EMPLOYEE
     department_id: Optional[str] = None
 
-class SevakCreate(SevakBase):
+class EmployeeCreate(EmployeeBase):
     password: str = Field(..., min_length=6)
 
-class SevakUpdate(BaseModel):
+class EmployeeUpdate(BaseModel):
     first_name: Optional[str] = Field(None, max_length=100)
     last_name: Optional[str] = Field(None, max_length=100)
     email: Optional[str] = None
@@ -23,9 +23,9 @@ class SevakUpdate(BaseModel):
     address: Optional[str] = None
     # Cannot update role or status directly here except by admin
 
-class SevakAdminUpdate(SevakUpdate):
+class EmployeeAdminUpdate(EmployeeUpdate):
     role: Optional[RoleEnum] = None
-    status: Optional[SevakStatusEnum] = None
+    status: Optional[EmployeeStatusEnum] = None
 
 
 class WeekOffHistoryEntry(BaseModel):
@@ -64,11 +64,11 @@ class AdminAccountOtpVerifyResponse(BaseModel):
     email_verification_token: str
     message: str
     
-class SevakResponse(SevakBase):
+class EmployeeResponse(EmployeeBase):
     id: str
-    sevak_id: int
+    employee_id: int
     email_verified: bool = False
-    status: SevakStatusEnum
+    status: EmployeeStatusEnum
     failed_login_attempts: int
     phone: Optional[str] = None
     address: Optional[str] = None
@@ -90,7 +90,7 @@ class SevakResponse(SevakBase):
         from_attributes = True
 class LockedAccountResponse(BaseModel):
     id: str
-    sevak_id: int
+    employee_id: int
     first_name: str
     last_name: str
     email: Optional[str] = None
@@ -105,7 +105,7 @@ class LockedAccountResponse(BaseModel):
 
 class DeleteRequestResponse(BaseModel):
     id: str
-    sevak_id: int
+    employee_id: int
     first_name: str
     last_name: str
     email: Optional[str] = None
@@ -117,7 +117,7 @@ class DeleteRequestResponse(BaseModel):
         from_attributes = True
 
 class AdminAccountCreateResponse(BaseModel):
-    account: SevakResponse
+    account: EmployeeResponse
     temporary_password: str
     invitation_sent: bool = False
     message: str

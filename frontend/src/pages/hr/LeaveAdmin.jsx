@@ -27,14 +27,14 @@ const HALF_DAY_PERIOD_LABELS = {
   SECOND_HALF: 'Second Half',
 };
 
-const ROLE_OPTIONS = ['HOD', 'SEVAK', 'HR', 'ADMIN', 'SUPER_ADMIN'];
+const ROLE_OPTIONS = ['HOD', 'EMPLOYEE', 'HR', 'ADMIN', 'SUPER_ADMIN'];
 
 export default function LeaveAdmin() {
   const { user } = useAuth();
   const [tabIndex, setTabIndex] = useState(0);
   const [requests, setRequests] = useState([]);
   const [leaveTypes, setLeaveTypes] = useState([]);
-  const [sevaks, setSevaks] = useState([]);
+  const [employees, setEmployees] = useState([]);
   const [departments, setDepartments] = useState([]);
   const [loading, setLoading] = useState(true);
   const [message, setMessage] = useState('');
@@ -58,7 +58,7 @@ export default function LeaveAdmin() {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const highlightId = location.state?.highlightRequestId || searchParams.get('highlight');
-  const highlightSevakId = location.state?.sevakId;
+  const highlightEmployeeId = location.state?.employeeId;
   const redirectCategory = location.state?.category;
   const rowRefs = useRef({});
 
@@ -86,7 +86,7 @@ export default function LeaveAdmin() {
       await Promise.all([
         fetchRequests(),
         fetchTypes(),
-        api.get('/api/sevaks/').then(r => setSevaks(r.data)).catch(() => {}),
+        api.get('/api/employees/').then(r => setEmployees(r.data)).catch(() => {}),
         api.get('/api/departments/').then(r => setDepartments(r.data)).catch(() => {}),
       ]);
       setLoading(false);
@@ -138,18 +138,18 @@ export default function LeaveAdmin() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [highlightId, requests]);
 
-  const getSevak = (id) => sevaks.find(s => s.id === id);
+  const getEmployee = (id) => employees.find(s => s.id === id);
   const getDept = (id) => departments.find(d => d.id === id);
 
   const applyRequestFilters = (reqs) => reqs.filter(r => {
-    if (highlightSevakId && r.sevak_id !== highlightSevakId) return false;
-    const sv = getSevak(r.sevak_id);
+    if (highlightEmployeeId && r.employee_id !== highlightEmployeeId) return false;
+    const sv = getEmployee(r.employee_id);
     const searchLower = search.toLowerCase();
     const matchSearch = !search
       || (sv && (
         sv.first_name?.toLowerCase().includes(searchLower)
         || sv.last_name?.toLowerCase().includes(searchLower)
-        || String(sv.sevak_id || '').includes(search)
+        || String(sv.employee_id || '').includes(search)
       ));
     const matchRole = filterRole ? sv?.role === filterRole : true;
     const matchDept = filterDept ? sv?.department_id === filterDept.id : true;
@@ -300,7 +300,7 @@ export default function LeaveAdmin() {
           <Table sx={{ minWidth: 650 }}>
             <TableHead sx={{ bgcolor: 'background.default' }}>
               <TableRow>
-                <TableCell><b>Sevak Name</b></TableCell>
+                <TableCell><b>Employee Name</b></TableCell>
                 <TableCell><b>Department</b></TableCell>
                 <TableCell><b>Leave Type</b></TableCell>
                 <TableCell><b>Status</b></TableCell>
@@ -313,7 +313,7 @@ export default function LeaveAdmin() {
             </TableHead>
             <TableBody>
               {(tabIndex === 0 ? pendingHrAction : allFilteredRequests).map((req) => {
-                const sv = getSevak(req.sevak_id);
+                const sv = getEmployee(req.employee_id);
                 const dept = getDept(sv?.department_id);
                 const isHighlighted = highlightId && req.id === highlightId;
                 return (
@@ -331,7 +331,7 @@ export default function LeaveAdmin() {
                       <Typography variant="body2" fontWeight="bold">
                         {sv ? `${sv.first_name} ${sv.last_name}` : '—'}
                       </Typography>
-                      <Typography variant="caption">#{sv?.sevak_id}</Typography>
+                      <Typography variant="caption">#{sv?.employee_id}</Typography>
                     </TableCell>
                     <TableCell>{dept?.name || '—'}</TableCell>
                     <TableCell>{req.leave_type_name || '—'}</TableCell>
@@ -571,7 +571,7 @@ export default function LeaveAdmin() {
         open={!!dialogRequest}
         request={dialogRequest}
         viewer={user?.role || 'HR'}
-        sevaks={sevaks}
+        employees={employees}
         departments={departments}
         readOnly={tabIndex !== 0}
         onClose={() => {

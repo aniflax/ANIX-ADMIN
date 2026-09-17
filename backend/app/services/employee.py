@@ -8,9 +8,9 @@ import hmac
 import re
 import secrets
 import string
-from app.models.sevak import Sevak, RoleEnum, SevakStatusEnum
+from app.models.employee import Employee, RoleEnum, EmployeeStatusEnum
 from app.models.department import SystemConfig
-from app.schemas.sevak import AdminAccountCreate, SevakCreate, SevakUpdate, SevakAdminUpdate
+from app.schemas.employee import AdminAccountCreate, EmployeeCreate, EmployeeUpdate, EmployeeAdminUpdate
 from app.core.config import settings
 from app.core.security import create_access_token, decode_access_token, hash_password
 from app.services.email_identity import ensure_email_available, normalize_email
@@ -20,11 +20,11 @@ from app.services.week_off_history import apply_week_off_change
 
 RESERVED_PRIVILEGED_ID_MIN = 10001
 RESERVED_PRIVILEGED_ID_MAX = 10010
-GENERAL_SEVAK_ID_START = 10011
+GENERAL_EMPLOYEE_ID_START = 10011
 ADMIN_ACCOUNT_OTP_PURPOSE = "admin_account_email_otp"
 ADMIN_ACCOUNT_VERIFIED_PURPOSE = "admin_account_email_verified"
 EMAIL_PATTERN = re.compile(r"^[^\s@]+@[^\s@]+\.[^\s@]+$")
-DIRECTORY_SEVAK_ROLES = [RoleEnum.SEVAK, RoleEnum.HOD]
+DIRECTORY_EMPLOYEE_ROLES = [RoleEnum.EMPLOYEE, RoleEnum.HOD]
 
 
 def send_email_verification_email(**kwargs) -> bool:
@@ -32,21 +32,21 @@ def send_email_verification_email(**kwargs) -> bool:
     return send_account_activation_email(**kwargs)
 
 
-def get_next_sevak_id(db: Session) -> int:
-    """Retrieve the next valid Sevak ID by finding the max and incrementing."""
-    system_config = db.query(SystemConfig).filter(SystemConfig.key == "SEVAK_ID_START").first()
-    start_id = int(system_config.value) if system_config else GENERAL_SEVAK_ID_START
-    start_id = max(start_id, GENERAL_SEVAK_ID_START)
+def get_next_employee_id(db: Session) -> int:
+    """Retrieve the next valid Employee ID by finding the max and incrementing."""
+    system_config = db.query(SystemConfig).filter(SystemConfig.key == "EMPLOYEE_ID_START").first()
+    start_id = int(system_config.value) if system_config else GENERAL_EMPLOYEE_ID_START
+    start_id = max(start_id, GENERAL_EMPLOYEE_ID_START)
 
-    max_sevak = (
-        db.query(Sevak)
-        .filter(Sevak.sevak_id >= start_id)
-        .order_by(Sevak.sevak_id.desc())
+    max_employee = (
+        db.query(Employee)
+        .filter(Employee.employee_id >= start_id)
+        .order_by(Employee.employee_id.desc())
         .first()
     )
 
-    if max_sevak and max_sevak.sevak_id >= start_id:
-        return max_sevak.sevak_id + 1
+    if max_employee and max_employee.employee_id >= start_id:
+        return max_employee.employee_id + 1
     return start_id
 
 
@@ -73,7 +73,7 @@ def _require_valid_email(email: str) -> str:
 def request_admin_account_email_otp(
     db: Session,
     email: str,
-    requested_by: Sevak,
+    requested_by: Employee,
 ) -> tuple[str, str, bool]:
     if requested_by.role != RoleEnum.SUPER_ADMIN:
         raise HTTPException(
@@ -150,8 +150,8 @@ def _validate_admin_account_email_verification_token(email: str, verification_to
 def get_next_privileged_account_id(db: Session) -> int:
     used_ids = {
         row[0]
-        for row in db.query(Sevak.sevak_id)
-        .filter(Sevak.sevak_id.between(RESERVED_PRIVILEGED_ID_MIN, RESERVED_PRIVILEGED_ID_MAX))
+        for row in db.query(Employee.employee_id)
+        .filter(Employee.employee_id.between(RESERVED_PRIVILEGED_ID_MIN, RESERVED_PRIVILEGED_ID_MAX))
         .all()
     }
     for account_id in range(RESERVED_PRIVILEGED_ID_MIN, RESERVED_PRIVILEGED_ID_MAX + 1):
@@ -166,8 +166,8 @@ def get_next_privileged_account_id(db: Session) -> int:
 def create_privileged_account(
     db: Session,
     account_in: AdminAccountCreate,
-    created_by: Sevak,
-) -> tuple[Sevak, str, bool]:
+    created_by: Employee,
+) -> tuple[Employee, str, bool]:
     """Create Admin/HR accounts in the reserved 10001-10010 range."""
     if created_by.role != RoleEnum.SUPER_ADMIN:
         raise HTTPException(
@@ -198,7 +198,7 @@ def create_privileged_account(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Admin and HR account IDs must be between 10001 and 10010.",
         )
-    existing_id = db.query(Sevak).filter(Sevak.sevak_id == account_id).first()
+    existing_id = db.query(Employee).filter(Employee.employee_id == account_id).first()
     if existing_id:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -206,8 +206,8 @@ def create_privileged_account(
         )
 
     temporary_password = generate_temporary_password()
-    account = Sevak(
-        sevak_id=account_id,
+    account = Employee(
+        employee_id=account_id,
         first_name=account_in.first_name,
         last_name=account_in.last_name,
         email=normalized_email,
@@ -215,7 +215,7 @@ def create_privileged_account(
         email_verified=False,
         role=account_in.role,
         hashed_password=hash_password(temporary_password),
-        status=SevakStatusEnum.INACTIVE,
+        status=EmployeeStatusEnum.INACTIVE,
     )
     db.add(account)
     db.commit()
@@ -225,131 +225,131 @@ def create_privileged_account(
     if account_in.send_invitation:
         invitation_sent = send_account_activation_email(
             db=db,
-            sevak=account,
+            employee=account,
             requested_by_name=f"{created_by.first_name} {created_by.last_name}",
         )
 
     return account, temporary_password, invitation_sent
 
 
-def create_sevak(db: Session, sevak_in: SevakCreate, created_by: Sevak) -> Sevak:
-    """Create a new Sevak in the system. HR and Admin can create."""
+def create_employee(db: Session, employee_in: EmployeeCreate, created_by: Employee) -> Employee:
+    """Create a new Employee in the system. HR and Admin can create."""
     if created_by.role not in [RoleEnum.HR, RoleEnum.ADMIN, RoleEnum.SUPER_ADMIN]:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail="Not enough permissions to create Sevak"
+            detail="Not enough permissions to create Employee"
         )
 
-    normalized_email = ensure_email_available(db, sevak_in.email)
+    normalized_email = ensure_email_available(db, employee_in.email)
 
-    new_sevak_id = get_next_sevak_id(db)
+    new_employee_id = get_next_employee_id(db)
 
-    sevak = Sevak(
-        sevak_id=new_sevak_id,
-        first_name=sevak_in.first_name,
-        last_name=sevak_in.last_name,
+    employee = Employee(
+        employee_id=new_employee_id,
+        first_name=employee_in.first_name,
+        last_name=employee_in.last_name,
         email=normalized_email,
         email_verified=False,
-        role=sevak_in.role,
-        department_id=sevak_in.department_id,
-        hashed_password=hash_password(sevak_in.password),
-        status=SevakStatusEnum.ACTIVE
+        role=employee_in.role,
+        department_id=employee_in.department_id,
+        hashed_password=hash_password(employee_in.password),
+        status=EmployeeStatusEnum.ACTIVE
     )
-    db.add(sevak)
+    db.add(employee)
     db.commit()
-    db.refresh(sevak)
-    if sevak.email:
-        send_email_verification_email(db=db, sevak=sevak, requested_by_name=f"{created_by.first_name} {created_by.last_name}")
-    return sevak
+    db.refresh(employee)
+    if employee.email:
+        send_email_verification_email(db=db, employee=employee, requested_by_name=f"{created_by.first_name} {created_by.last_name}")
+    return employee
 
 
-def get_sevak_by_id(db: Session, id: str) -> Optional[Sevak]:
-    return db.query(Sevak).filter(Sevak.id == id).first()
+def get_employee_by_id(db: Session, id: str) -> Optional[Employee]:
+    return db.query(Employee).filter(Employee.id == id).first()
 
 
-def get_all_sevaks(
+def get_all_employees(
     db: Session,
-    current_user: Sevak,
+    current_user: Employee,
     skip: int = 0,
     limit: int = 100,
     department_id: Optional[str] = None
-) -> List[Sevak]:
-    """Retrieve list of Sevaks based on user role."""
-    query = db.query(Sevak).filter(
-        Sevak.is_active == True,
-        Sevak.role.in_(DIRECTORY_SEVAK_ROLES),
+) -> List[Employee]:
+    """Retrieve list of Employees based on user role."""
+    query = db.query(Employee).filter(
+        Employee.is_active == True,
+        Employee.role.in_(DIRECTORY_EMPLOYEE_ROLES),
     )
 
     # Filtering based on role
     if current_user.role == RoleEnum.HOD:
-        query = query.filter(Sevak.department_id == current_user.department_id)
-    elif current_user.role in [RoleEnum.SEVAK]:
+        query = query.filter(Employee.department_id == current_user.department_id)
+    elif current_user.role in [RoleEnum.EMPLOYEE]:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail="Not enough permissions to list Sevaks"
+            detail="Not enough permissions to list Employees"
         )
 
     if department_id and current_user.role in [RoleEnum.HR, RoleEnum.ADMIN, RoleEnum.SUPER_ADMIN]:
-        query = query.filter(Sevak.department_id == department_id)
+        query = query.filter(Employee.department_id == department_id)
 
     return query.offset(skip).limit(limit).all()
 
 
-def get_onboarding_sevaks(
+def get_onboarding_employees(
     db: Session,
-    current_user: Sevak,
+    current_user: Employee,
     start_date: datetime = None,
     end_date: datetime = None,
-) -> List[Sevak]:
-    """Get ALL self-onboarded sevaks (id_proof_path IS NOT NULL), both activated and pending.
+) -> List[Employee]:
+    """Get ALL self-onboarded employees (id_proof_path IS NOT NULL), both activated and pending.
     Optionally filter by created_at date range (financial month)."""
     if current_user.role not in [RoleEnum.HR, RoleEnum.ADMIN, RoleEnum.SUPER_ADMIN]:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Not enough permissions"
         )
-    query = db.query(Sevak).filter(
-        Sevak.id_proof_path.isnot(None),
-        Sevak.role.in_(DIRECTORY_SEVAK_ROLES),
+    query = db.query(Employee).filter(
+        Employee.id_proof_path.isnot(None),
+        Employee.role.in_(DIRECTORY_EMPLOYEE_ROLES),
     )
     if start_date:
-        query = query.filter(Sevak.created_at >= start_date)
+        query = query.filter(Employee.created_at >= start_date)
     if end_date:
-        query = query.filter(Sevak.created_at <= end_date)
-    return query.order_by(Sevak.created_at.desc()).all()
+        query = query.filter(Employee.created_at <= end_date)
+    return query.order_by(Employee.created_at.desc()).all()
 
 
-def update_sevak_profile(db: Session, db_sevak: Sevak, sevak_in: SevakUpdate) -> Sevak:
+def update_employee_profile(db: Session, db_employee: Employee, employee_in: EmployeeUpdate) -> Employee:
     """Update general profile data."""
-    update_data = sevak_in.dict(exclude_unset=True)
+    update_data = employee_in.dict(exclude_unset=True)
     email_changed = False
-    previous_email = normalize_email(db_sevak.email)
+    previous_email = normalize_email(db_employee.email)
     new_week_off = update_data.pop("default_week_off", None)
     if "email" in update_data:
         update_data["email"] = ensure_email_available(
             db,
             update_data["email"],
-            exclude_sevak_id=db_sevak.id,
+            exclude_employee_id=db_employee.id,
         )
     for field, value in update_data.items():
-        setattr(db_sevak, field, value)
+        setattr(db_employee, field, value)
         if field == "email" and value != previous_email:
             email_changed = True
-            db_sevak.email_verified = False
+            db_employee.email_verified = False
 
-    if new_week_off is not None and new_week_off != db_sevak.default_week_off:
-        apply_week_off_change(db, db_sevak, new_week_off, get_local_today())
-        db_sevak.default_week_off = new_week_off
+    if new_week_off is not None and new_week_off != db_employee.default_week_off:
+        apply_week_off_change(db, db_employee, new_week_off, get_local_today())
+        db_employee.default_week_off = new_week_off
 
-    db_sevak.updated_at = get_local_now()
+    db_employee.updated_at = get_local_now()
     db.commit()
-    db.refresh(db_sevak)
-    if email_changed and db_sevak.email:
-        send_email_verification_email(db=db, sevak=db_sevak, requested_by_name="Profile update")
-    return db_sevak
+    db.refresh(db_employee)
+    if email_changed and db_employee.email:
+        send_email_verification_email(db=db, employee=db_employee, requested_by_name="Profile update")
+    return db_employee
 
 
-def admin_update_sevak(db: Session, db_sevak: Sevak, sevak_in: SevakAdminUpdate, current_user: Sevak) -> Sevak:
+def admin_update_employee(db: Session, db_employee: Employee, employee_in: EmployeeAdminUpdate, current_user: Employee) -> Employee:
     """Admin/HR level update (includes role and status changes)."""
     if current_user.role not in [RoleEnum.HR, RoleEnum.ADMIN, RoleEnum.SUPER_ADMIN]:
         raise HTTPException(
@@ -357,40 +357,40 @@ def admin_update_sevak(db: Session, db_sevak: Sevak, sevak_in: SevakAdminUpdate,
             detail="Not enough permissions to perform admin update"
         )
 
-    update_data = sevak_in.dict(exclude_unset=True)
+    update_data = employee_in.dict(exclude_unset=True)
     email_changed = False
-    previous_email = normalize_email(db_sevak.email)
+    previous_email = normalize_email(db_employee.email)
     new_week_off = update_data.pop("default_week_off", None)
     if "email" in update_data:
         update_data["email"] = ensure_email_available(
             db,
             update_data["email"],
-            exclude_sevak_id=db_sevak.id,
+            exclude_employee_id=db_employee.id,
         )
     for field, value in update_data.items():
-        setattr(db_sevak, field, value)
+        setattr(db_employee, field, value)
         if field == "email" and value != previous_email:
             email_changed = True
-            db_sevak.email_verified = False
+            db_employee.email_verified = False
 
-    effective_department_id = update_data.get("department_id", db_sevak.department_id)
-    effective_role = update_data.get("role", db_sevak.role)
+    effective_department_id = update_data.get("department_id", db_employee.department_id)
+    effective_role = update_data.get("role", db_employee.role)
     if effective_role == RoleEnum.HOD and not effective_department_id:
         raise HTTPException(status_code=400, detail="HOD must have a department assigned.")
-    if not effective_department_id and db_sevak.role == RoleEnum.HOD:
-        db_sevak.role = RoleEnum.SEVAK
+    if not effective_department_id and db_employee.role == RoleEnum.HOD:
+        db_employee.role = RoleEnum.EMPLOYEE
 
-    if new_week_off is not None and new_week_off != db_sevak.default_week_off:
-        apply_week_off_change(db, db_sevak, new_week_off, get_local_today())
-        db_sevak.default_week_off = new_week_off
+    if new_week_off is not None and new_week_off != db_employee.default_week_off:
+        apply_week_off_change(db, db_employee, new_week_off, get_local_today())
+        db_employee.default_week_off = new_week_off
 
     # Unlock logic check
-    if 'status' in update_data and update_data['status'] == SevakStatusEnum.ACTIVE:
-        db_sevak.failed_login_attempts = 0
+    if 'status' in update_data and update_data['status'] == EmployeeStatusEnum.ACTIVE:
+        db_employee.failed_login_attempts = 0
 
-    db_sevak.updated_at = get_local_now()
+    db_employee.updated_at = get_local_now()
     db.commit()
-    db.refresh(db_sevak)
-    if email_changed and db_sevak.email:
-        send_email_verification_email(db=db, sevak=db_sevak, requested_by_name=f"{current_user.first_name} {current_user.last_name}")
-    return db_sevak
+    db.refresh(db_employee)
+    if email_changed and db_employee.email:
+        send_email_verification_email(db=db, employee=db_employee, requested_by_name=f"{current_user.first_name} {current_user.last_name}")
+    return db_employee

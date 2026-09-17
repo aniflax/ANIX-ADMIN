@@ -66,8 +66,8 @@ export default function LeaveRequestDetailDialog({
   open,
   onClose,
   request,
-  viewer = 'SEVAK',
-  sevaks = [],
+  viewer = 'EMPLOYEE',
+  employees = [],
   departments = [],
   defaultWeekOff,
   onActionComplete,
@@ -81,24 +81,24 @@ export default function LeaveRequestDetailDialog({
 
   const safeRequest = request || {};
 
-  const sevak = useMemo(
-    () => sevaks.find((s) => s.id === safeRequest.sevak_id),
-    [sevaks, safeRequest.sevak_id],
+  const employee = useMemo(
+    () => employees.find((s) => s.id === safeRequest.employee_id),
+    [employees, safeRequest.employee_id],
   );
   const department = useMemo(() => {
-    if (sevak?.department_id) {
-      return departments.find((d) => d.id === sevak.department_id);
+    if (employee?.department_id) {
+      return departments.find((d) => d.id === employee.department_id);
     }
     return null;
-  }, [departments, sevak]);
+  }, [departments, employee]);
 
   const approverHod = useMemo(
-    () => sevaks.find((s) => s.id === safeRequest.approver_hod_id),
-    [sevaks, safeRequest.approver_hod_id],
+    () => employees.find((s) => s.id === safeRequest.approver_hod_id),
+    [employees, safeRequest.approver_hod_id],
   );
   const approverHr = useMemo(
-    () => sevaks.find((s) => s.id === safeRequest.approver_hr_id),
-    [sevaks, safeRequest.approver_hr_id],
+    () => employees.find((s) => s.id === safeRequest.approver_hr_id),
+    [employees, safeRequest.approver_hr_id],
   );
 
   const isWeekOff = isWeekOffRequest(safeRequest);
@@ -113,7 +113,7 @@ export default function LeaveRequestDetailDialog({
 
   const readOnly = readOnlyProp
     || !request
-    || viewer === 'SEVAK'
+    || viewer === 'EMPLOYEE'
     || safeRequest.status === 'CANCELLED'
     || safeRequest.status === 'REJECTED'
     || safeRequest.status === 'APPROVED';
@@ -256,16 +256,16 @@ export default function LeaveRequestDetailDialog({
 
         <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' }, gap: 2, mb: 2 }}>
           <Field
-            label="Sevak"
-            value={sevak ? `${sevak.first_name} ${sevak.last_name}` : 'Unknown'}
+            label="Employee"
+            value={employee ? `${employee.first_name} ${employee.last_name}` : 'Unknown'}
           />
           <Field
-            label="Sevak ID"
-            value={sevak?.sevak_id != null ? `#${sevak.sevak_id}` : '—'}
+            label="Employee ID"
+            value={employee?.employee_id != null ? `#${employee.employee_id}` : '—'}
           />
           <Field
             label="Department"
-            value={department?.name || (sevak?.department_id ? 'Unassigned' : 'Unassigned')}
+            value={department?.name || (employee?.department_id ? 'Unassigned' : 'Unassigned')}
           />
           <Field
             label="Leave Type"
@@ -376,7 +376,7 @@ export default function LeaveRequestDetailDialog({
 
       <DialogActions sx={{ flexDirection: { xs: 'column-reverse', sm: 'row' }, gap: 1, px: 3, pb: 2.5, alignItems: { sm: 'center' } }}>
         <Box sx={{ flex: 1, display: 'flex', alignItems: 'center' }}>
-          {viewer === 'SEVAK' && request.sevak_id && (request.status === 'PENDING' || request.status === 'HOD_APPROVED') && (
+          {viewer === 'EMPLOYEE' && request.employee_id && (request.status === 'PENDING' || request.status === 'HOD_APPROVED') && (
             <Button color="error" variant="outlined" onClick={handleCancel} disabled={busy}>
               Cancel Request
             </Button>

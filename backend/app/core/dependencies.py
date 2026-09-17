@@ -4,7 +4,7 @@ from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
 from app.core.database import get_db
 from app.core.security import decode_access_token
-from app.models.sevak import Sevak, RoleEnum, SevakStatusEnum
+from app.models.employee import Employee, RoleEnum, EmployeeStatusEnum
 
 # DB dependency
 DbSession = Annotated[Session, Depends(get_db)]
@@ -13,11 +13,11 @@ DbSession = Annotated[Session, Depends(get_db)]
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/auth/login")
 
 
-def get_current_sevak(
+def get_current_employee(
     token: Annotated[str, Depends(oauth2_scheme)],
     db: DbSession
-) -> Sevak:
-    """Get currently logged in Sevak from JWT token."""
+) -> Employee:
+    """Get currently logged in Employee from JWT token."""
     credentials_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
         detail="Could not validate credentials",
@@ -27,44 +27,44 @@ def get_current_sevak(
     if payload is None:
         raise credentials_exception
 
-    sevak_id: str = payload.get("sub")
-    if sevak_id is None:
+    employee_id: str = payload.get("sub")
+    if employee_id is None:
         raise credentials_exception
 
-    sevak = db.query(Sevak).filter(Sevak.id == sevak_id).first()
-    if sevak is None:
+    employee = db.query(Employee).filter(Employee.id == employee_id).first()
+    if employee is None:
         raise credentials_exception
 
-    if sevak.status == SevakStatusEnum.LOCKED:
+    if employee.status == EmployeeStatusEnum.LOCKED:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Account is locked. Please contact Admin."
         )
 
-    if not sevak.is_active:
+    if not employee.is_active:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Account is inactive."
         )
 
-    return sevak
+    return employee
 
 
 # Role-based access dependencies
-CurrentSevak = Annotated[Sevak, Depends(get_current_sevak)]
+CurrentEmployee = Annotated[Employee, Depends(get_current_employee)]
 
 
 def require_roles(*roles: RoleEnum):
     """Dependency factory — restricts access to specific roles."""
     def role_checker(
-        current_sevak: Annotated[Sevak, Depends(get_current_sevak)]
-    ) -> Sevak:
-        if current_sevak.role not in roles:
+        current_employee: Annotated[Employee, Depends(get_current_employee)]
+    ) -> Employee:
+        if current_employee.role not in roles:
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail="You do not have permission to perform this action."
             )
-        return current_sevak
+        return current_employee
     return role_checker
 
 
@@ -89,10 +89,10 @@ RequireHoD = Depends(require_roles(
     RoleEnum.HOD
 ))
 
-RequireAnySevak = Depends(require_roles(
+RequireAnyEmployee = Depends(require_roles(
     RoleEnum.SUPER_ADMIN,
     RoleEnum.ADMIN,
     RoleEnum.HR,
     RoleEnum.HOD,
-    RoleEnum.SEVAK
+    RoleEnum.EMPLOYEE
 ))

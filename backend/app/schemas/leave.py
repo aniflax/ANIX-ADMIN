@@ -31,7 +31,7 @@ class LeaveTypeResponse(LeaveTypeBase):
 
 class LeaveBalanceResponse(BaseModel):
     id: str
-    sevak_id: str
+    employee_id: str
     leave_type_id: str
     year: int
     total_allocated: float
@@ -54,7 +54,7 @@ class LeaveRequestCreate(LeaveRequestBase):
 
 class LeaveRequestResponse(LeaveRequestBase):
     id: str
-    sevak_id: str
+    employee_id: str
     total_days: float
     is_half_day: bool
     half_day_period: Optional[str] = None

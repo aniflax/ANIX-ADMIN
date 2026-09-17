@@ -62,7 +62,7 @@ export default function MainLayout(props) {
   const { user, logout } = useAuth();
   const location = useLocation();
   const accountMenuOpen = Boolean(accountMenuAnchor);
-  const displayName = user?.full_name || [user?.first_name, user?.last_name].filter(Boolean).join(' ') || 'Sevak';
+  const displayName = user?.full_name || [user?.first_name, user?.last_name].filter(Boolean).join(' ') || 'Employee';
   const displayRole = user?.role?.replace('_', ' ') || '';
 
   const handleDrawerToggle = () => {
@@ -116,7 +116,7 @@ export default function MainLayout(props) {
   };
 
   const getNavItems = () => {
-    const hasSelfAttendanceAndLeaves = user && ['SEVAK', 'HOD'].includes(user.role);
+    const hasSelfAttendanceAndLeaves = user && ['EMPLOYEE', 'HOD'].includes(user.role);
     const items = [
       { text: 'Dashboard', icon: <DashboardIcon />, path: '/' },
       { text: 'My Profile', icon: <PersonIcon />, path: '/profile' },
@@ -128,7 +128,7 @@ export default function MainLayout(props) {
     }
 
     if (user && ['SUPER_ADMIN', 'ADMIN', 'HR', 'HOD'].includes(user.role)) {
-      items.push({ text: user.role === 'HOD' ? 'Department Directory' : 'Sevak Directory', icon: <PeopleIcon />, path: '/directory' });
+      items.push({ text: user.role === 'HOD' ? 'Department Directory' : 'Employee Directory', icon: <PeopleIcon />, path: '/directory' });
     }
 
     if (user && user.role === 'HOD') {

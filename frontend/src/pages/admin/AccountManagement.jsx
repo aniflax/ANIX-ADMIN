@@ -23,7 +23,7 @@ import { useAuth } from '../../context/AuthContext';
 import { formatDisplayDate, formatDisplayDateTime } from '../../utils/dateFormat';
 
 const statusColor = { ACTIVE: 'success', INACTIVE: 'default', LOCKED: 'error' };
-const roleColor = { SUPER_ADMIN: 'error', ADMIN: 'warning', HR: 'primary', HOD: 'secondary', SEVAK: 'default' };
+const roleColor = { SUPER_ADMIN: 'error', ADMIN: 'warning', HR: 'primary', HOD: 'secondary', EMPLOYEE: 'default' };
 const initialAccountForm = {
   account_id: '',
   role: 'HR',
@@ -42,7 +42,7 @@ const initialOtpState = {
 const initialAccountErrors = {};
 const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const noWrapCellSx = { whiteSpace: 'nowrap' };
-const sevakIdCellSx = { ...noWrapCellSx, minWidth: 92 };
+const employeeIdCellSx = { ...noWrapCellSx, minWidth: 92 };
 const lastLoginCellSx = { ...noWrapCellSx, minWidth: 120 };
 const emailCellSx = { ...noWrapCellSx, minWidth: 220 };
 
@@ -108,9 +108,9 @@ export default function AccountManagement() {
     setLoading(true);
     try {
       const [acc, locked, del] = await Promise.allSettled([
-        axios.get('/api/sevaks/admin/accounts'),
-        axios.get('/api/sevaks/admin/locked-list'),
-        axios.get('/api/sevaks/admin/delete-requests')
+        axios.get('/api/employees/admin/accounts'),
+        axios.get('/api/employees/admin/locked-list'),
+        axios.get('/api/employees/admin/delete-requests')
       ]);
       if (acc.status === 'fulfilled') setAccounts(acc.value.data);
       if (locked.status === 'fulfilled') setLockedAccounts(locked.value.data);
@@ -147,11 +147,11 @@ export default function AccountManagement() {
     const { action, account } = confirmDialog;
     setConfirmDialog({ open: false, action: null, account: null });
     try {
-      if (action === 'unlock') await axios.post(`/api/sevaks/${account.id}/unlock`);
-      else if (action === 'lock') await axios.post(`/api/sevaks/${account.id}/lock`);
-      else if (action === 'delete') await axios.delete(`/api/sevaks/${account.id}/hard-delete`);
-      else if (action === 'reset-pw') await axios.post(`/api/sevaks/${account.id}/reset-password-notify`);
-      else if (action === 'revoke-delete') await axios.delete(`/api/sevaks/${account.id}/delete-request`);
+      if (action === 'unlock') await axios.post(`/api/employees/${account.id}/unlock`);
+      else if (action === 'lock') await axios.post(`/api/employees/${account.id}/lock`);
+      else if (action === 'delete') await axios.delete(`/api/employees/${account.id}/hard-delete`);
+      else if (action === 'reset-pw') await axios.post(`/api/employees/${account.id}/reset-password-notify`);
+      else if (action === 'revoke-delete') await axios.delete(`/api/employees/${account.id}/delete-request`);
       
       setMsg({ type: 'success', text: `Action '${action}' completed for ${account.first_name} ${account.last_name}.` });
       fetchAll();
@@ -185,7 +185,7 @@ export default function AccountManagement() {
     setAccountErrors(initialAccountErrors);
     setOtpSending(true);
     try {
-      const response = await axios.post('/api/sevaks/admin/accounts/otp/send', { email }, { skipAuthLogout: true });
+      const response = await axios.post('/api/employees/admin/accounts/otp/send', { email }, { skipAuthLogout: true });
       setOtpState((prev) => ({
         ...prev,
         email: response.data.email || email,
@@ -212,7 +212,7 @@ export default function AccountManagement() {
     setOtpVerifying(true);
     try {
       const response = await axios.post(
-        '/api/sevaks/admin/accounts/otp/verify',
+        '/api/employees/admin/accounts/otp/verify',
         {
           email: otpState.email,
           otp: otpState.otp,
@@ -274,7 +274,7 @@ export default function AccountManagement() {
         email: normalizeEmail(accountForm.email),
         email_verification_token: otpState.email_verification_token,
       };
-      const response = await axios.post('/api/sevaks/admin/accounts', payload, { skipAuthLogout: true });
+      const response = await axios.post('/api/employees/admin/accounts', payload, { skipAuthLogout: true });
       setCreatedAccount(response.data);
       setAddAccountStep('created');
       setAccountDialogMsg({ type: 'success', text: response.data.message || 'Account created successfully.' });
@@ -292,7 +292,7 @@ export default function AccountManagement() {
     setMailingCredentials(true);
     try {
       await axios.post(
-        `/api/sevaks/admin/accounts/${createdAccount.account.id}/send-credentials`,
+        `/api/employees/admin/accounts/${createdAccount.account.id}/send-credentials`,
         {
           temporary_password: createdAccount.temporary_password,
         },
@@ -333,7 +333,7 @@ export default function AccountManagement() {
 
   const renderAccountRow = (account) => (
     <TableRow key={account.id} hover>
-      <TableCell sx={sevakIdCellSx}>{account.sevak_id}</TableCell>
+      <TableCell sx={employeeIdCellSx}>{account.employee_id}</TableCell>
       <TableCell sx={noWrapCellSx}><strong>{account.first_name} {account.last_name}</strong></TableCell>
       <TableCell sx={emailCellSx}>{renderEmailStatus(account)}</TableCell>
       <TableCell sx={noWrapCellSx}>
@@ -414,7 +414,7 @@ export default function AccountManagement() {
             <Table size="small" sx={{ minWidth: 980 }}>
               <TableHead>
                 <TableRow sx={{ bgcolor: 'grey.100' }}>
-                  <TableCell sx={sevakIdCellSx}><strong>Sevak ID</strong></TableCell>
+                  <TableCell sx={employeeIdCellSx}><strong>Employee ID</strong></TableCell>
                   <TableCell sx={noWrapCellSx}><strong>Name</strong></TableCell>
                   <TableCell sx={emailCellSx}><strong>Email</strong></TableCell>
                   <TableCell sx={noWrapCellSx}><strong>Role</strong></TableCell>
@@ -453,7 +453,7 @@ export default function AccountManagement() {
                     <TableRow key={a.id} hover>
                       <TableCell sx={noWrapCellSx}>
                         <Typography fontWeight="bold">{a.first_name} {a.last_name}</Typography>
-                        <Typography variant="caption" color="text.secondary">#{a.sevak_id}</Typography>
+                        <Typography variant="caption" color="text.secondary">#{a.employee_id}</Typography>
                       </TableCell>
                       <TableCell>
                         <Box display="flex" alignItems="center" gap={0.5} color="error.main">
@@ -525,7 +525,7 @@ export default function AccountManagement() {
               <Table size="small" sx={{ minWidth: 640 }}>
                 <TableHead>
                   <TableRow sx={{ bgcolor: 'grey.100' }}>
-                    <TableCell sx={sevakIdCellSx}><strong>Sevak ID</strong></TableCell>
+                    <TableCell sx={employeeIdCellSx}><strong>Employee ID</strong></TableCell>
                     <TableCell sx={noWrapCellSx}><strong>Name</strong></TableCell>
                     <TableCell sx={noWrapCellSx}><strong>Role</strong></TableCell>
                     <TableCell sx={noWrapCellSx}><strong>Requested By</strong></TableCell>
@@ -535,7 +535,7 @@ export default function AccountManagement() {
                 <TableBody>
                   {deleteRequests.map(a => (
                     <TableRow key={a.id} hover sx={{ bgcolor: '#fff3e0' }}>
-                      <TableCell sx={sevakIdCellSx}>{a.sevak_id}</TableCell>
+                      <TableCell sx={employeeIdCellSx}>{a.employee_id}</TableCell>
                       <TableCell sx={noWrapCellSx}><strong>{a.first_name} {a.last_name}</strong></TableCell>
                       <TableCell sx={noWrapCellSx}><Chip label={a.role?.replace('_', ' ')} size="small" /></TableCell>
                       <TableCell sx={noWrapCellSx}>{a.delete_requested_by_name || 'Unknown'}</TableCell>
@@ -769,7 +769,7 @@ export default function AccountManagement() {
           {addAccountStep === 'created' && createdAccount && (
             <Box sx={{ mt: 2, p: 2, borderRadius: 2, bgcolor: 'grey.50', border: '1px solid', borderColor: 'divider' }}>
               <Typography variant="body2">Account ID</Typography>
-              <Typography variant="h6" sx={{ mb: 1 }}>{createdAccount.account.sevak_id}</Typography>
+              <Typography variant="h6" sx={{ mb: 1 }}>{createdAccount.account.employee_id}</Typography>
               <Typography variant="body2">One-time password</Typography>
               <Typography variant="h6" sx={{ fontFamily: 'monospace' }}>{createdAccount.temporary_password}</Typography>
             </Box>
@@ -835,7 +835,7 @@ export default function AccountManagement() {
           <Typography>{actionLabel[confirmDialog.action]?.msg}</Typography>
           {confirmDialog.account && (
             <Typography sx={{ mt: 1 }} color="text.secondary">
-              Account: <strong>{confirmDialog.account?.first_name} {confirmDialog.account?.last_name}</strong> (#{confirmDialog.account?.sevak_id})
+              Account: <strong>{confirmDialog.account?.first_name} {confirmDialog.account?.last_name}</strong> (#{confirmDialog.account?.employee_id})
             </Typography>
           )}
         </DialogContent>

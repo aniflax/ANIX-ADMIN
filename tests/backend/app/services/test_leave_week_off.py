@@ -4,7 +4,7 @@ import pytest
 from fastapi import HTTPException
 
 from app.models.leave import LeaveBalance, LeaveType
-from app.models.sevak import RoleEnum
+from app.models.employee import RoleEnum
 from app.schemas.leave import LeaveRequestCreate, LeaveTypeCreate
 from app.services.leave import (
     WEEK_OFF_TYPE_NAME,
@@ -17,24 +17,24 @@ from app.services.leave import (
 )
 
 
-def test_week_off_is_created_internally_and_hidden_from_leave_types(db_session, make_sevak):
-    sevak = make_sevak(
-        sevak_id=10011,
-        role=RoleEnum.SEVAK,
+def test_week_off_is_created_internally_and_hidden_from_leave_types(db_session, make_employee):
+    employee = make_employee(
+        employee_id=10011,
+        role=RoleEnum.EMPLOYEE,
         activated_at=datetime(2026, 1, 1, 9, 0),
     )
 
-    status = get_week_off_status(db_session, sevak.id)
+    status = get_week_off_status(db_session, employee.id)
 
     week_off_type = db_session.query(LeaveType).filter(LeaveType.name == WEEK_OFF_TYPE_NAME).one()
     assert status["week_off_type_id"] == week_off_type.id
     assert WEEK_OFF_TYPE_NAME not in [leave_type.name for leave_type in get_leave_types(db_session)]
 
 
-def test_week_off_is_not_returned_in_leave_balances(db_session, make_sevak):
-    sevak = make_sevak(
-        sevak_id=10011,
-        role=RoleEnum.SEVAK,
+def test_week_off_is_not_returned_in_leave_balances(db_session, make_employee):
+    employee = make_employee(
+        employee_id=10011,
+        role=RoleEnum.EMPLOYEE,
         activated_at=datetime(2026, 1, 1, 9, 0),
     )
     db_session.add(
@@ -45,9 +45,9 @@ def test_week_off_is_not_returned_in_leave_balances(db_session, make_sevak):
             is_active=True,
         )
     )
-    get_week_off_status(db_session, sevak.id)
+    get_week_off_status(db_session, employee.id)
 
-    balances = get_leave_balances(db_session, sevak.id, 2026)
+    balances = get_leave_balances(db_session, employee.id, 2026)
 
     leave_type_names = {
         db_session.query(LeaveType).filter(LeaveType.id == balance.leave_type_id).one().name
@@ -56,10 +56,10 @@ def test_week_off_is_not_returned_in_leave_balances(db_session, make_sevak):
     assert leave_type_names == {"Casual Leave"}
 
 
-def test_inactive_leave_type_is_not_returned_in_leave_balances(db_session, make_sevak):
-    sevak = make_sevak(
-        sevak_id=10011,
-        role=RoleEnum.SEVAK,
+def test_inactive_leave_type_is_not_returned_in_leave_balances(db_session, make_employee):
+    employee = make_employee(
+        employee_id=10011,
+        role=RoleEnum.EMPLOYEE,
         activated_at=datetime(2026, 1, 1, 9, 0),
     )
     active_type = LeaveType(name="Casual Leave", annual_quota=12, is_active=True)
@@ -70,7 +70,7 @@ def test_inactive_leave_type_is_not_returned_in_leave_balances(db_session, make_
     db_session.refresh(inactive_type)
     db_session.add(
         LeaveBalance(
-            sevak_id=sevak.id,
+            employee_id=employee.id,
             leave_type_id=inactive_type.id,
             year=2026,
             total_allocated=6,
@@ -80,22 +80,22 @@ def test_inactive_leave_type_is_not_returned_in_leave_balances(db_session, make_
     )
     db_session.commit()
 
-    balances = get_leave_balances(db_session, sevak.id, 2026)
+    balances = get_leave_balances(db_session, employee.id, 2026)
 
     assert {balance.leave_type_id for balance in balances} == {active_type.id}
 
 
-def test_delete_leave_type_soft_deletes_and_removes_balance_cards(db_session, make_sevak):
-    super_admin = make_sevak(
-        sevak_id=10000,
+def test_delete_leave_type_soft_deletes_and_removes_balance_cards(db_session, make_employee):
+    super_admin = make_employee(
+        employee_id=10000,
         role=RoleEnum.SUPER_ADMIN,
         email="super@example.com",
         password="ChangeMe@123",
     )
-    sevak = make_sevak(
-        sevak_id=10011,
-        role=RoleEnum.SEVAK,
-        email="sevak@example.com",
+    employee = make_employee(
+        employee_id=10011,
+        role=RoleEnum.EMPLOYEE,
+        email="employee@example.com",
         activated_at=datetime(2026, 1, 1, 9, 0),
     )
     leave_type = LeaveType(name="Floating Leave", annual_quota=3, is_active=True)
@@ -104,7 +104,7 @@ def test_delete_leave_type_soft_deletes_and_removes_balance_cards(db_session, ma
     db_session.refresh(leave_type)
     db_session.add(
         LeaveBalance(
-            sevak_id=sevak.id,
+            employee_id=employee.id,
             leave_type_id=leave_type.id,
             year=2026,
             total_allocated=3,
@@ -121,9 +121,9 @@ def test_delete_leave_type_soft_deletes_and_removes_balance_cards(db_session, ma
     assert db_session.query(LeaveBalance).filter(LeaveBalance.leave_type_id == leave_type.id).count() == 0
 
 
-def test_create_leave_type_reactivates_deleted_type_with_same_name(db_session, make_sevak):
-    super_admin = make_sevak(
-        sevak_id=10000,
+def test_create_leave_type_reactivates_deleted_type_with_same_name(db_session, make_employee):
+    super_admin = make_employee(
+        employee_id=10000,
         role=RoleEnum.SUPER_ADMIN,
         email="super@example.com",
         password="ChangeMe@123",
@@ -152,9 +152,9 @@ def test_create_leave_type_reactivates_deleted_type_with_same_name(db_session, m
     assert restored.max_consecutive_days == 5
 
 
-def test_privileged_roles_cannot_apply_for_self_leave(db_session, make_sevak):
-    admin = make_sevak(
-        sevak_id=10000,
+def test_privileged_roles_cannot_apply_for_self_leave(db_session, make_employee):
+    admin = make_employee(
+        employee_id=10000,
         role=RoleEnum.ADMIN,
         activated_at=datetime(2026, 1, 1, 9, 0),
     )
@@ -183,10 +183,10 @@ def test_privileged_roles_cannot_apply_for_self_leave(db_session, make_sevak):
     assert exc.value.status_code == 403
 
 
-def test_regular_leave_excludes_default_week_off_from_total_days(db_session, make_sevak, make_leave_type):
-    sevak = make_sevak(
-        sevak_id=10011,
-        role=RoleEnum.SEVAK,
+def test_regular_leave_excludes_default_week_off_from_total_days(db_session, make_employee, make_leave_type):
+    employee = make_employee(
+        employee_id=10011,
+        role=RoleEnum.EMPLOYEE,
         default_week_off="Sunday",
         activated_at=datetime(2026, 1, 1, 9, 0),
     )
@@ -200,11 +200,11 @@ def test_regular_leave_excludes_default_week_off_from_total_days(db_session, mak
             end_date=datetime(2026, 5, 18).date(),
             reason="Family visit",
         ),
-        sevak,
+        employee,
     )
 
     balance = db_session.query(LeaveBalance).filter(
-        LeaveBalance.sevak_id == sevak.id,
+        LeaveBalance.employee_id == employee.id,
         LeaveBalance.leave_type_id == leave_type.id,
         LeaveBalance.year == 2026,
     ).one()
@@ -212,10 +212,10 @@ def test_regular_leave_excludes_default_week_off_from_total_days(db_session, mak
     assert balance.pending == 4
 
 
-def test_regular_leave_rejects_range_containing_only_week_off(db_session, make_sevak, make_leave_type):
-    sevak = make_sevak(
-        sevak_id=10011,
-        role=RoleEnum.SEVAK,
+def test_regular_leave_rejects_range_containing_only_week_off(db_session, make_employee, make_leave_type):
+    employee = make_employee(
+        employee_id=10011,
+        role=RoleEnum.EMPLOYEE,
         default_week_off="Sunday",
         activated_at=datetime(2026, 1, 1, 9, 0),
     )
@@ -230,7 +230,7 @@ def test_regular_leave_rejects_range_containing_only_week_off(db_session, make_s
                 end_date=datetime(2026, 5, 17).date(),
                 reason="Week off only",
             ),
-            sevak,
+            employee,
         )
 
     assert exc.value.status_code == 400

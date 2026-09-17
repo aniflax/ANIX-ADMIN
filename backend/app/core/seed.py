@@ -1,7 +1,7 @@
 from sqlalchemy.orm import Session
 from app.core.database import SessionLocal
 from app.core.security import hash_password
-from app.models.sevak import Sevak, RoleEnum, SevakStatusEnum
+from app.models.employee import Employee, RoleEnum, EmployeeStatusEnum
 from app.models.department import SystemConfig, ConfigAccessLevel
 import uuid
 
@@ -10,15 +10,15 @@ def seed_system_config(db: Session):
     """Insert default system config values if not present."""
     defaults = [
         {
-            "key": "SEVAK_ID_START",
+            "key": "EMPLOYEE_ID_START",
             "value": "10011",
-            "description": "Starting number for general Sevak ID generation. 10000-10010 are reserved for SuperAdmin/Admin/HR accounts.",
+            "description": "Starting number for general Employee ID generation. 10000-10010 are reserved for SuperAdmin/Admin/HR accounts.",
             "access_level": ConfigAccessLevel.SUPER_ADMIN,
         },
         {
-            "key": "SEVAK_ID_FORMAT_DIGITS",
+            "key": "EMPLOYEE_ID_FORMAT_DIGITS",
             "value": "5",
-            "description": "Number of digits in Sevak ID",
+            "description": "Number of digits in Employee ID",
             "access_level": ConfigAccessLevel.SUPER_ADMIN,
         },
         {
@@ -148,21 +148,21 @@ def seed_system_config(db: Session):
 
 def seed_super_admin(db: Session):
     """Create Super Admin account if not present."""
-    exists = db.query(Sevak).filter(
-        Sevak.role == RoleEnum.SUPER_ADMIN
+    exists = db.query(Employee).filter(
+        Employee.role == RoleEnum.SUPER_ADMIN
     ).first()
 
     if not exists:
-        super_admin = Sevak(
+        super_admin = Employee(
             id=str(uuid.uuid4()),
-            sevak_id=10000,  # Reserved ID for Super Admin
+            employee_id=10000,  # Reserved ID for Super Admin
             first_name="Aniflax",
             last_name="Admin",
             email="aniflax@aol.com",
             email_verified=True,
             hashed_password=hash_password("admin.locahost"),
             role=RoleEnum.SUPER_ADMIN,
-            status=SevakStatusEnum.ACTIVE,
+            status=EmployeeStatusEnum.ACTIVE,
         )
         db.add(super_admin)
         db.commit()

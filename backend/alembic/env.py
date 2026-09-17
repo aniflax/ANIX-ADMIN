@@ -17,8 +17,8 @@ from app.models import (
     department_location,
     leave,
     location,
-    sevak,
-    sevak_location,
+    employee,
+    employee_location,
 )
 
 # this is the Alembic Config object, which provides
