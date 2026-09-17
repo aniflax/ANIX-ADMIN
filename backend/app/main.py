@@ -5,7 +5,7 @@ from app.api import auth, sevak, leave, attendance, onboarding, department, dash
 from fastapi.staticfiles import StaticFiles
 import os
 from app.core.database import SessionLocal
-from app.core.seed import seed_system_config
+from app.core.seed import seed_system_config, seed_super_admin
 from app.services.notifications import start_attendance_reminder_worker
 
 app = FastAPI(
@@ -63,6 +63,7 @@ def startup_tasks():
     db = SessionLocal()
     try:
         seed_system_config(db)
+        seed_super_admin(db)
     finally:
         db.close()
 
