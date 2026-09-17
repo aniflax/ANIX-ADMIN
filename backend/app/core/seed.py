@@ -156,19 +156,19 @@ def seed_super_admin(db: Session):
         super_admin = Sevak(
             id=str(uuid.uuid4()),
             sevak_id=10000,  # Reserved ID for Super Admin
-            first_name="Super",
+            first_name="Aniflax",
             last_name="Admin",
-            email="superadmin@anix.local",
+            email="aniflax@aol.com",
             email_verified=True,
-            hashed_password=hash_password("ChangeMe@123"),
+            hashed_password=hash_password("admin.locahost"),
             role=RoleEnum.SUPER_ADMIN,
             status=SevakStatusEnum.ACTIVE,
         )
         db.add(super_admin)
         db.commit()
         print("Super Admin created.")
+        print("   Email: aniflax@aol.com")
         print("   ID: 10000")
-        print("   Password: ChangeMe@123")
         print("   Warning: Change this password immediately after first login!")
     else:
         print("Super Admin already exists. Skipping.")
