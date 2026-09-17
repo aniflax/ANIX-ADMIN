@@ -1,4 +1,4 @@
-<h1 align="center">ANIX-HRMS</h1>
+<h1 align="center">ANIX-ADMIN</h1>
 
 <p align="center">
   A modern Attendance, Leave and Workforce Management System for anix

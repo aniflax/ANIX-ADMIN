@@ -169,7 +169,7 @@ export default function MainLayout(props) {
             letterSpacing: 0.3,
           }}
         >
-          ANIX-HRMS
+          ANIX-ADMIN
         </Typography>
       </Toolbar>
       <Divider />
@@ -242,7 +242,7 @@ export default function MainLayout(props) {
             <MenuIcon />
           </IconButton>
           <Typography variant="h6" noWrap component="div" sx={{ flexGrow: 1, fontSize: { xs: '1rem', sm: '1.25rem' }, fontWeight: 800 }}>
-            ANIX-HRMS
+            ANIX-ADMIN
           </Typography>
           {user && (
             <>

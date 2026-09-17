@@ -9,7 +9,7 @@ from app.core.seed import seed_system_config, seed_super_admin
 from app.services.notifications import start_attendance_reminder_worker
 
 app = FastAPI(
-    title="ANIX-HRMS API",
+    title="ANIX-ADMIN API",
     description="Attendance and Leave Management System for anix",
     version="1.0.0",
 )
@@ -74,7 +74,7 @@ def startup_tasks():
 def health_check():
     return {
         "status": "healthy",
-        "app": "ANIX-HRMS API",
+        "app": "ANIX-ADMIN API",
         "environment": settings.ENVIRONMENT
     }
 

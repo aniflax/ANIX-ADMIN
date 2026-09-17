@@ -91,7 +91,7 @@ export default function Login() {
         >
           <Stack alignItems="center" spacing={1} sx={{ mb: 3, width: '100%' }}>
             <Typography component="h1" variant="h4" sx={{ fontWeight: 800, color: 'primary.main', textAlign: 'center' }}>
-              ANIX-HRMS
+              ANIX-ADMIN
             </Typography>
             <Typography component="h2" variant="body1" sx={{ color: 'text.secondary', textAlign: 'center' }}>
               Sign in to continue
