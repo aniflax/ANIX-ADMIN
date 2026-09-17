@@ -66,7 +66,7 @@ def get_official_communication_email(db: Session | None = None) -> str:
         _get_config_value(db, "OFFICIAL_COMMUNICATION_EMAIL")
         or _get_config_value(db, "EMAILS_FROM_EMAIL")
         or _get_config_value(db, "SMTP_USER")
-        or "no-reply@vds-hrms.com"
+        or "no-reply@anix-hrms.example"
     )
 
 
@@ -111,11 +111,11 @@ def get_brevo_api_key(db: Session | None = None) -> str:
 
 
 def get_email_from_name(db: Session | None = None) -> str:
-    return _get_config_value(db, "EMAILS_FROM_NAME", "VDS HRMS") or "VDS HRMS"
+    return _get_config_value(db, "EMAILS_FROM_NAME", "anix HRMS") or "anix HRMS"
 
 
 def get_email_from_email(db: Session | None = None) -> str:
-    return _get_config_value(db, "EMAILS_FROM_EMAIL", "no-reply@vds-hrms.com") or "no-reply@vds-hrms.com"
+    return _get_config_value(db, "EMAILS_FROM_EMAIL", "no-reply@anix-hrms.example") or "no-reply@anix-hrms.example"
 
 
 def _get_lan_ip() -> Optional[str]:
@@ -298,10 +298,10 @@ def send_password_reset_email(
     db: Session | None = None,
     expiry_minutes: int = 10,
 ) -> bool:
-    subject = "Password Reset - VDS HRMS"
+    subject = "Password Reset - anix HRMS"
     body = f"""Hi {user_name},
 
-You have requested to reset your password for VDS HRMS.
+You have requested to reset your password for anix HRMS.
 Please click the link below to set a new password:
 
 {reset_link}
@@ -320,7 +320,7 @@ If you did not request this, please contact the Admin.
 
 def send_test_email(
     email_to: str,
-    subject: str = "VDS HRMS Mail Test",
+    subject: str = "anix HRMS Mail Test",
     body: Optional[str] = None,
     db: Session | None = None,
 ) -> bool:
@@ -329,7 +329,7 @@ def send_test_email(
         to_email=email_to,
         subject=subject,
         body=body
-        or f"""This is a test email from VDS HRMS.
+        or f"""This is a test email from anix HRMS.
 
 Official mailbox: {official_email}
 SMTP user: {get_smtp_user(db) or 'not configured'}
@@ -377,10 +377,10 @@ def send_account_activation_email(
 
     role_label = str(sevak.role.value if hasattr(sevak.role, "value") else sevak.role).replace("_", " ")
     id_label = "Account ID" if role_label in {"ADMIN", "HR", "SUPER ADMIN"} else "Sevak ID"
-    subject = "Activate your account - VDS HRMS"
+    subject = "Activate your account - anix HRMS"
     body = f"""Hi {sevak.first_name} {sevak.last_name},
 
-Your {role_label} account has been created in VDS HRMS.
+Your {role_label} account has been created in anix HRMS.
 Please click the Activation Link to activate your account.
 
 This link will expire in 30 minutes.
@@ -391,11 +391,11 @@ Activation link:
 """
     html_body = f"""<html><body>
 <p>Hi {sevak.first_name} {sevak.last_name},</p>
-<p>Your <strong>{role_label}</strong> account has been created in VDS HRMS.</p>
+<p>Your <strong>{role_label}</strong> account has been created in anix HRMS.</p>
 <p>Please click the activation button to activate your account.</p>
 <p><strong>{id_label}:</strong> {sevak.sevak_id if sevak.sevak_id else 'Allocated after activation'}</p>
 <p><a href="{activation_link}" style="display:inline-block;padding:10px 16px;background:#f47c20;color:#ffffff;text-decoration:none;border-radius:6px;font-weight:700;">Activate Account</a></p>
-<p>If the button does not open on your phone, copy and paste this full link in the same browser used for VDS HRMS:</p>
+<p>If the button does not open on your phone, copy and paste this full link in the same browser used for anix HRMS:</p>
 <p style="word-break:break-all;"><a href="{activation_link}">{activation_link}</a></p>
 <p>This link will expire in 30 minutes.</p>
 </body></html>"""
@@ -424,10 +424,10 @@ def send_account_credentials_email(
         return False
 
     role_label = str(sevak.role.value if hasattr(sevak.role, "value") else sevak.role).replace("_", " ")
-    subject = "Your VDS HRMS login details"
+    subject = "Your anix HRMS login details"
     body = f"""Hi {sevak.first_name} {sevak.last_name},
 
-Your VDS HRMS {role_label} account login details are below.
+Your anix HRMS {role_label} account login details are below.
 
 Account ID: {sevak.sevak_id}
 Temporary Password: {temporary_password}
@@ -437,10 +437,10 @@ Please activate your account first if you have not already done so, then sign in
 """
     html_body = f"""<html><body>
 <p>Hi {sevak.first_name} {sevak.last_name},</p>
-<p>Your VDS HRMS <strong>{role_label}</strong> account login details are below.</p>
+<p>Your anix HRMS <strong>{role_label}</strong> account login details are below.</p>
 <p><strong>Account ID:</strong> {sevak.sevak_id}</p>
 <p><strong>Temporary Password:</strong> {temporary_password}</p>
-<p><a href="{login_link}" style="display:inline-block;padding:10px 16px;background:#f47c20;color:#ffffff;text-decoration:none;border-radius:6px;font-weight:700;">Open VDS HRMS</a></p>
+<p><a href="{login_link}" style="display:inline-block;padding:10px 16px;background:#f47c20;color:#ffffff;text-decoration:none;border-radius:6px;font-weight:700;">Open anix HRMS</a></p>
 <p>Please activate your account first if you have not already done so, then sign in and change your password immediately.</p>
 </body></html>"""
 
@@ -476,10 +476,10 @@ def send_admin_account_otp_email(
     otp: str,
     requested_by_name: Optional[str] = None,
 ) -> bool:
-    subject = "Verify email for VDS HRMS account creation"
+    subject = "Verify email for anix HRMS account creation"
     body = f"""Hi,
 
-Your OTP for creating an Admin/HR account in VDS HRMS is:
+Your OTP for creating an Admin/HR account in anix HRMS is:
 
 {otp}
 
@@ -490,7 +490,7 @@ This OTP will expire in 10 minutes.
 
     html_body = f"""<html><body>
 <p>Hi,</p>
-<p>Your OTP for creating an Admin/HR account in VDS HRMS is:</p>
+<p>Your OTP for creating an Admin/HR account in anix HRMS is:</p>
 <p style="font-size:24px;font-weight:700;letter-spacing:4px;">{otp}</p>
 <p>This OTP will expire in 10 minutes.</p>
 {f'<p>Requested by: {requested_by_name}</p>' if requested_by_name else ''}
@@ -556,7 +556,7 @@ def send_attendance_reminder_email(db: Session, sevak: Sevak, reminder_date: Opt
     deadline_time = get_attendance_deadline_time(db)
     official_email = get_official_communication_email(db)
 
-    subject = "Attendance Reminder - VDS HRMS"
+    subject = "Attendance Reminder - anix HRMS"
     body = f"""Hi {sevak.first_name} {sevak.last_name},
 
 This is a reminder to mark your attendance for {reminder_date.strftime('%d-%b-%Y')}.
@@ -614,7 +614,7 @@ Reason     : {reason}
 Please review and act on it here:
 {action_url}
 
-This is an automated reminder from VDS HRMS.
+This is an automated reminder from anix HRMS.
 """
     html_body = f"""<html><body>
 <p>Hi {recipient.first_name} {recipient.last_name},</p>
@@ -625,7 +625,7 @@ This is an automated reminder from VDS HRMS.
   <tr><td><b>Reason</b></td><td>{reason}</td></tr>
 </table>
 <p><a href="{action_url}" style="display:inline-block;padding:10px 16px;background:#f47c20;color:#ffffff;text-decoration:none;border-radius:6px;font-weight:700;">Review Request</a></p>
-<p>This is an automated reminder from VDS HRMS.</p>
+<p>This is an automated reminder from anix HRMS.</p>
 </body></html>"""
 
     message = _build_message(
@@ -652,9 +652,9 @@ def send_bulk_communication_email(
         return False
 
     official_email = get_official_communication_email(db)
-    sender_label = sender_name or "VDS HRMS"
+    sender_label = sender_name or "anix HRMS"
 
-    safe_subject = (subject or "").strip() or "Communication from VDS HRMS"
+    safe_subject = (subject or "").strip() or "Communication from anix HRMS"
     safe_body = (body or "").strip()
     if not safe_body:
         return False
@@ -664,14 +664,14 @@ def send_bulk_communication_email(
 {safe_body}
 
 ---
-Sent by {sender_label} via VDS HRMS Bulk Communication.
+Sent by {sender_label} via anix HRMS Bulk Communication.
 If you have any questions, please reach out to the HR team.
 """
     html_body = f"""<html><body>
 <p>Hi {recipient.first_name} {recipient.last_name},</p>
 <div style="white-space:pre-wrap;font-family:Arial,Helvetica,sans-serif;font-size:14px;line-height:1.5;">{safe_body}</div>
 <hr style="margin-top:24px;border:none;border-top:1px solid #e0e0e0;" />
-<p style="color:#777;font-size:12px;">Sent by {sender_label} via VDS HRMS Bulk Communication.</p>
+<p style="color:#777;font-size:12px;">Sent by {sender_label} via anix HRMS Bulk Communication.</p>
 </body></html>"""
 
     message = _build_message(
@@ -712,7 +712,7 @@ def process_attendance_reminders(db: Session, force: bool = False) -> dict:
     attempts = 5 if force else 1
     try:
         for _ in range(attempts):
-            lock_acquired = bool(db.execute(text("SELECT pg_try_advisory_lock(hashtext('vds_attendance_reminder'))")).scalar())
+            lock_acquired = bool(db.execute(text("SELECT pg_try_advisory_lock(hashtext('anix_attendance_reminder'))")).scalar())
             if lock_acquired:
                 break
             if force:
@@ -794,7 +794,7 @@ def process_attendance_reminders(db: Session, force: bool = False) -> dict:
         }
     finally:
         try:
-            db.execute(text("SELECT pg_advisory_unlock(hashtext('vds_attendance_reminder'))"))
+            db.execute(text("SELECT pg_advisory_unlock(hashtext('anix_attendance_reminder'))"))
         except Exception:
             logger.exception("Failed to release attendance reminder lock")
 

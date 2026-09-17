@@ -1,4 +1,4 @@
-# VDS HRMS Production Deployment
+# anix HRMS Production Deployment
 
 ## Stack
 
@@ -20,7 +20,7 @@ STORAGE_PROVIDER=r2
 R2_ACCOUNT_ID=...
 R2_ACCESS_KEY_ID=...
 R2_SECRET_ACCESS_KEY=...
-R2_BUCKET_NAME=vds-hrms-documents
+R2_BUCKET_NAME=anix-hrms-documents
 R2_ENDPOINT_URL=https://<account-id>.r2.cloudflarestorage.com
 DB_POOL_SIZE=2
 DB_MAX_OVERFLOW=3

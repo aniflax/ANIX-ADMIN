@@ -13,7 +13,7 @@ from app.services.sevak import admin_update_sevak
 def test_authenticate_sevak_blocks_unverified_email(db_session, make_sevak):
     sevak = make_sevak(
         sevak_id=10006,
-        email="ktejakrishna@gmail.com",
+        email="sevak@example.com",
         email_verified=False,
     )
 
@@ -29,7 +29,7 @@ def test_authenticate_sevak_blocks_unverified_email(db_session, make_sevak):
 def test_authenticate_sevak_accepts_email_case_insensitively(db_session, make_sevak):
     make_sevak(
         sevak_id=10006,
-        email="ktejakrishna@gmail.com",
+        email="sevak@example.com",
         email_verified=True,
         password="secret123",
     )
@@ -40,7 +40,7 @@ def test_authenticate_sevak_accepts_email_case_insensitively(db_session, make_se
         password="secret123",
     )
 
-    assert sevak.email == "ktejakrishna@gmail.com"
+    assert sevak.email == "sevak@example.com"
 
 
 def test_verify_email_with_token_marks_user_verified(db_session, make_sevak):

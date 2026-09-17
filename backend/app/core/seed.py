@@ -41,19 +41,19 @@ def seed_system_config(db: Session):
         },
         {
             "key": "OFFICIAL_COMMUNICATION_EMAIL",
-            "value": "vaidicdharmasansthan.hr@gmail.com",
+            "value": "no-reply@anix-hrms.example",
             "description": "Official mailbox used for password reset and attendance reminder emails",
             "access_level": ConfigAccessLevel.SUPER_ADMIN,
         },
         {
             "key": "EMAILS_FROM_NAME",
-            "value": "VDS HRMS",
+            "value": "anix HRMS",
             "description": "Display name shown on outbound email",
             "access_level": ConfigAccessLevel.SUPER_ADMIN,
         },
         {
             "key": "EMAILS_FROM_EMAIL",
-            "value": "vaidicdharmasansthan.hr@gmail.com",
+            "value": "no-reply@anix-hrms.example",
             "description": "From email shown on outbound mail",
             "access_level": ConfigAccessLevel.SUPER_ADMIN,
         },
@@ -71,7 +71,7 @@ def seed_system_config(db: Session):
         },
         {
             "key": "SMTP_USER",
-            "value": "vaidicdharmasansthan.hr@gmail.com",
+            "value": "",
             "description": "SMTP username used for outbound mail",
             "access_level": ConfigAccessLevel.SUPER_ADMIN,
         },
@@ -158,7 +158,7 @@ def seed_super_admin(db: Session):
             sevak_id=10000,  # Reserved ID for Super Admin
             first_name="Super",
             last_name="Admin",
-            email="superadmin@vds.org",
+            email="superadmin@anix.local",
             email_verified=True,
             hashed_password=hash_password("ChangeMe@123"),
             role=RoleEnum.SUPER_ADMIN,

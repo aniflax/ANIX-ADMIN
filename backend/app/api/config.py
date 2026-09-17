@@ -24,14 +24,14 @@ class MailConfigUpdate(BaseModel):
     smtp_port: int
     smtp_user: str
     smtp_password: Optional[str] = None
-    from_name: str = "VDS HRMS"
-    from_email: str = "no-reply@vds-hrms.com"
+    from_name: str = "anix HRMS"
+    from_email: str = "no-reply@anix-hrms.example"
     password_reset_link_validity_minutes: int = 10
 
 
 class MailTestRequest(BaseModel):
     recipient_email: str
-    subject: str = "VDS HRMS Mail Test"
+    subject: str = "anix HRMS Mail Test"
     body: Optional[str] = None
 
 
@@ -91,13 +91,13 @@ def get_mail_config(db: DbSession, current_user: CurrentSevak):
     }
 
     return {
-        "official_email": configs.get("OFFICIAL_COMMUNICATION_EMAIL", "vaidicdharmasansthan.hr@gmail.com"),
+        "official_email": configs.get("OFFICIAL_COMMUNICATION_EMAIL", "no-reply@anix-hrms.example"),
         "smtp_server": configs.get("SMTP_SERVER", "smtp.gmail.com"),
         "smtp_port": int(configs.get("SMTP_PORT", "587") or 587),
         "smtp_user": configs.get("SMTP_USER", ""),
         "smtp_password_set": bool(configs.get("SMTP_PASSWORD")),
-        "from_name": configs.get("EMAILS_FROM_NAME", "VDS HRMS"),
-        "from_email": configs.get("EMAILS_FROM_EMAIL", "no-reply@vds-hrms.com"),
+        "from_name": configs.get("EMAILS_FROM_NAME", "anix HRMS"),
+        "from_email": configs.get("EMAILS_FROM_EMAIL", "no-reply@anix-hrms.example"),
         "password_reset_link_validity_minutes": int(
             configs.get("PASSWORD_RESET_LINK_VALIDITY_MINUTES", "10") or 10
         ),

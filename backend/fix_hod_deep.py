@@ -11,7 +11,10 @@ import sys
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent.parent))
-os.environ['DATABASE_URL'] = 'postgresql://postgres:13MayGovinda@localhost:5432/vds_hrms'
+os.environ.setdefault(
+    'DATABASE_URL',
+    'postgresql://postgres:yourpassword@localhost:5432/anix_hrms',
+)
 
 try:
     from sqlalchemy import create_engine, and_, or_

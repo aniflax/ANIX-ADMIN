@@ -903,7 +903,7 @@ export default function Onboarding() {
             Sevak Onboarding
           </Typography>
           <Typography variant="body1" color="text.secondary">
-            Join the Vaidic Dharma Sansthan community. Please provide your details and mandatory documents.
+            Join the anix community. Please provide your details and mandatory documents.
           </Typography>
         </Box>
 

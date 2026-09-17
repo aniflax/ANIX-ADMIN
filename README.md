@@ -1,11 +1,7 @@
-<p align="center">
-  <img src="frontend/public/docs/vds-aol-transparent.webp" alt="VDS HRMS" width="160" />
-</p>
-
-<h1 align="center">VDS HRMS</h1>
+<h1 align="center">anix HRMS</h1>
 
 <p align="center">
-  A modern Attendance, Leave and Workforce Management System for VDS
+  A modern Attendance, Leave and Workforce Management System for anix
   <br/>
   <em>Full-stack HRMS built with FastAPI + React</em>
 </p>
@@ -14,7 +10,7 @@
 
 ## Overview
 
-**VDS HRMS** is a web-based Human Resource Management System purpose-built for VDS
+**anix HRMS** is a web-based Human Resource Management System purpose-built for anix
 (an organization of sevaks — selfless service workers). It digitizes the complete
 employee lifecycle, from onboarding a new sevak to tracking daily attendance,
 managing leave, and scaling sevaks up to Ashramites.
@@ -105,7 +101,7 @@ week-off management, and secure document storage.
 ## Project Structure
 
 ```text
-VDS-HRMS/
+anix-hrms/
 ├── backend/
 │   ├── alembic/                 # Database migrations
 │   ├── app/
@@ -279,4 +275,6 @@ Retention: 14 daily, 8 weekly and 12 monthly backups are kept automatically.
 
 ## License
 
-© VDS. All rights reserved.
+Released under the [MIT License](LICENSE).
+
+© 2026 aniflax.

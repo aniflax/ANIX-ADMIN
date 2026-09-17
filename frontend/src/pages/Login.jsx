@@ -17,7 +17,6 @@ import Visibility from '@mui/icons-material/Visibility';
 import VisibilityOff from '@mui/icons-material/VisibilityOff';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate, Navigate } from 'react-router-dom';
-import vdsLogo from '../assets/vds-aol-transparent.webp';
 
 export default function Login() {
   const { login, isAuthenticated } = useAuth();
@@ -91,19 +90,8 @@ export default function Login() {
           }}
         >
           <Stack alignItems="center" spacing={1} sx={{ mb: 3, width: '100%' }}>
-            <Box
-              component="img"
-              src={vdsLogo}
-              alt="VDS AOL"
-              sx={{
-                width: { xs: 92, sm: 108 },
-                height: 'auto',
-                display: 'block',
-                objectFit: 'contain',
-              }}
-            />
             <Typography component="h1" variant="h4" sx={{ fontWeight: 800, color: 'primary.main', textAlign: 'center' }}>
-              VDS HRMS
+              anix HRMS
             </Typography>
             <Typography component="h2" variant="body1" sx={{ color: 'text.secondary', textAlign: 'center' }}>
               Sign in to continue

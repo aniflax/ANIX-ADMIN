@@ -37,7 +37,7 @@ describe('Settings', () => {
           data: {
             enabled: true,
             deadline_time: '10:30 AM IST',
-            official_email: 'vaidicdharmasansthan.hr@gmail.com',
+            official_email: 'no-reply@anix-hrms.example',
             last_sent_date: '2026-04-20',
           },
         });
@@ -45,13 +45,13 @@ describe('Settings', () => {
       if (url === '/api/config/mail') {
         return Promise.resolve({
           data: {
-            official_email: 'vaidicdharmasansthan.hr@gmail.com',
+            official_email: 'no-reply@anix-hrms.example',
             smtp_server: 'smtp.gmail.com',
             smtp_port: 587,
-            smtp_user: 'vaidicdharmasansthan.hr@gmail.com',
+            smtp_user: 'no-reply@anix-hrms.example',
             smtp_password_set: true,
-            from_name: 'VDS HRMS',
-            from_email: 'vaidicdharmasansthan.hr@gmail.com',
+            from_name: 'anix HRMS',
+            from_email: 'no-reply@anix-hrms.example',
             password_reset_link_validity_minutes: 10,
           },
         });

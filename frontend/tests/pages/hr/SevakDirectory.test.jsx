@@ -44,7 +44,7 @@ describe('SevakDirectory', () => {
               sevak_id: 10006,
               first_name: 'Teja',
               last_name: 'Krishna',
-              email: 'ktejakrishna@gmail.com',
+              email: 'sevak@example.com',
               email_verified: true,
               role: 'SEVAK',
               status: 'ACTIVE',

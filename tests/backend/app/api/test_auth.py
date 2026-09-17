@@ -6,7 +6,7 @@ from app.core.security import create_access_token
 def test_login_route_blocks_unverified_user(api_client_factory, make_sevak):
     sevak = make_sevak(
         sevak_id=10006,
-        email="ktejakrishna@gmail.com",
+        email="sevak@example.com",
         email_verified=False,
     )
     client = api_client_factory(sevak)
@@ -23,7 +23,7 @@ def test_login_route_blocks_unverified_user(api_client_factory, make_sevak):
 def test_verify_email_route_marks_user_verified(api_client_factory, make_sevak, db_session):
     sevak = make_sevak(
         sevak_id=10006,
-        email="ktejakrishna@gmail.com",
+        email="sevak@example.com",
         email_verified=False,
     )
     token = create_access_token(

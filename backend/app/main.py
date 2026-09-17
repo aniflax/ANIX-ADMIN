@@ -9,8 +9,8 @@ from app.core.seed import seed_system_config
 from app.services.notifications import start_attendance_reminder_worker
 
 app = FastAPI(
-    title="VDS HRMS API",
-    description="Attendance and Leave Management System for VDS",
+    title="anix HRMS API",
+    description="Attendance and Leave Management System for anix",
     version="1.0.0",
 )
 
@@ -20,7 +20,7 @@ CORS_ORIGIN_REGEX = (
     r"10\.\d{1,3}\.\d{1,3}\.\d{1,3}|"
     r"172\.(1[6-9]|2\d|3[0-1])\.\d{1,3}\.\d{1,3}|"
     r"192\.168\.\d{1,3}\.\d{1,3}|"
-    r"([a-z0-9-]+\.)?vds-hrms\.pages\.dev"
+    r"([a-z0-9-]+\.)?anix-hrms\.pages\.dev"
     r")(:\d+)?$"
 )
 
@@ -73,7 +73,7 @@ def startup_tasks():
 def health_check():
     return {
         "status": "healthy",
-        "app": "VDS HRMS API",
+        "app": "anix HRMS API",
         "environment": settings.ENVIRONMENT
     }
 

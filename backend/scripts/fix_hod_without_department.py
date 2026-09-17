@@ -4,7 +4,8 @@ Fix HODs without department assignment.
 Downgrades any HOD that doesn't have a department_id to SEVAK role.
 """
 import sys
-sys.path.insert(0, '/d/Desktop/TejaKrishna/Art of Living/VDS Projects/Applications/VDS-HRMS/backend')
+from pathlib import Path
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent.parent))
 
 from app.core.database import SessionLocal
 from app.models.sevak import Sevak, RoleEnum

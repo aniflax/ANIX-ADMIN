@@ -35,7 +35,7 @@ export default function Settings() {
     smtp_port: 587,
     smtp_user: '',
     smtp_password: '',
-    from_name: 'VDS HRMS',
+    from_name: 'anix HRMS',
     from_email: '',
     password_reset_link_validity_minutes: 10,
     smtp_password_set: false,
@@ -47,7 +47,7 @@ export default function Settings() {
   const isSuperAdmin = user?.role === 'SUPER_ADMIN';
   const isHrOrAdmin = user?.role === 'HR' || isSuperAdmin;
   const officialEmailConfig = configs.find((config) => config.key === 'OFFICIAL_COMMUNICATION_EMAIL');
-  const officialEmailValue = officialEmailConfig?.value || 'vaidicdharmasansthan.hr@gmail.com';
+  const officialEmailValue = officialEmailConfig?.value || 'no-reply@anix-hrms.example';
 
   useEffect(() => {
     fetchConfigs();
@@ -101,12 +101,12 @@ export default function Settings() {
         smtp_port: res.data.smtp_port || 587,
         smtp_user: res.data.smtp_user || '',
         smtp_password: '',
-        from_name: res.data.from_name || 'VDS HRMS',
+        from_name: res.data.from_name || 'anix HRMS',
         from_email: res.data.from_email || '',
         password_reset_link_validity_minutes: res.data.password_reset_link_validity_minutes || 10,
         smtp_password_set: !!res.data.smtp_password_set,
       });
-      setMailTestRecipient(res.data.official_email || 'ktejakrishna@gmail.com');
+      setMailTestRecipient(res.data.official_email || '');
     } catch (err) {
       console.error(err);
     }
@@ -296,8 +296,8 @@ export default function Settings() {
     try {
       const res = await api.post('/api/config/mail/test', {
         recipient_email: mailTestRecipient,
-        subject: 'VDS HRMS Mail Test',
-        body: `This is a test email from VDS HRMS.\n\nOfficial communication mailbox: ${mailConfig.official_email || officialEmailValue}\n`,
+        subject: 'anix HRMS Mail Test',
+        body: `This is a test email from anix HRMS.\n\nOfficial communication mailbox: ${mailConfig.official_email || officialEmailValue}\n`,
       });
       setMessage({ text: res.data.message || 'Test email sent successfully', type: 'success' });
     } catch (err) {

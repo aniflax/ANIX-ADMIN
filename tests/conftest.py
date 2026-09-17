@@ -11,7 +11,7 @@ from sqlalchemy.orm import sessionmaker
 from sqlalchemy.pool import StaticPool
 
 # Ensure the app settings module can be imported safely in tests.
-os.environ.setdefault("DATABASE_URL", "postgresql+psycopg2://test:test@127.0.0.1:5432/vds_test")
+os.environ.setdefault("DATABASE_URL", "postgresql+psycopg2://test:test@127.0.0.1:5432/anix_test")
 os.environ.setdefault("SECRET_KEY", "test-secret-key")
 os.environ.setdefault("ENVIRONMENT", "test")
 os.environ.setdefault("FRONTEND_URL", "http://testserver")

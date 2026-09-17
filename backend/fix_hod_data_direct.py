@@ -9,8 +9,11 @@ from pathlib import Path
 # Add parent directory to path
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-# Set environment variables before importing app
-os.environ['DATABASE_URL'] = 'postgresql://postgres:13MayGovinda@localhost:5432/vds_hrms'
+# Read the database URL from the environment (see backend/.env.example).
+os.environ.setdefault(
+    'DATABASE_URL',
+    'postgresql://postgres:yourpassword@localhost:5432/anix_hrms',
+)
 
 try:
     from sqlalchemy import create_engine

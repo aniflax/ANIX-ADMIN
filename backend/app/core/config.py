@@ -29,8 +29,8 @@ class Settings(BaseSettings):
     SMTP_PORT: int = 587
     SMTP_USER: str = ""
     SMTP_PASSWORD: str = ""
-    EMAILS_FROM_NAME: str = "VDS HRMS"
-    EMAILS_FROM_EMAIL: str = "no-reply@vds-hrms.com"
+    EMAILS_FROM_NAME: str = "anix HRMS"
+    EMAILS_FROM_EMAIL: str = "no-reply@anix-hrms.example"
     EMAIL_PROVIDER: str = "smtp"
     BREVO_API_KEY: str = ""
     FRONTEND_URL: str = "http://localhost:5173"

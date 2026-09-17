@@ -2,7 +2,7 @@
 # Quick SQL fix for HODs without departments
 
 echo "Fixing HODs without department assignment..."
-psql -U postgres -d vds_hrms << EOF
+psql -U postgres -d anix_hrms << EOF
 -- Show HODs without departments before fix
 SELECT 'BEFORE FIX:' as status, sevak_id, CONCAT(first_name, ' ', last_name) as name, role, department_id
 FROM sevaks

@@ -1,12 +1,10 @@
 import axios from 'axios';
 
 // In dev, use Vite's same-origin proxy so mobile devices only need :5173 access.
+// Set VITE_API_BASE_URL (see frontend/.env.example) to the deployed backend URL.
 export const getApiBaseURL = () => {
   if (import.meta.env.VITE_API_BASE_URL) {
     return import.meta.env.VITE_API_BASE_URL;
-  }
-  if (typeof window !== 'undefined' && window.location.hostname.endsWith('.pages.dev')) {
-    return 'https://vds-hrms-api.onrender.com';
   }
   return '';
 };

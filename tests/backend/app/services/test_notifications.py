@@ -23,7 +23,7 @@ def test_password_reset_uses_configured_validity_window(db_session, make_config,
         description="Password reset link validity",
         access_level=ConfigAccessLevel.SUPER_ADMIN,
     )
-    sevak = make_sevak(email="ktejakrishna@gmail.com", email_verified=True)
+    sevak = make_sevak(email="sevak@example.com", email_verified=True)
 
     captured = {}
 
@@ -46,7 +46,7 @@ def test_password_reset_uses_configured_validity_window(db_session, make_config,
 def test_process_attendance_reminders_includes_locked_but_active_users(db_session, make_sevak, monkeypatch):
     locked = make_sevak(
         sevak_id=10006,
-        email="ktejakrishna@gmail.com",
+        email="sevak@example.com",
         email_verified=True,
         status=SevakStatusEnum.LOCKED,
     )
@@ -157,7 +157,7 @@ def test_send_message_uses_brevo_api_when_configured(monkeypatch):
         body="Plain body",
         html_body="<p>HTML body</p>",
         from_email="sender@example.com",
-        from_name="VDS HRMS",
+        from_name="anix HRMS",
         reply_to="reply@example.com",
     )
 
@@ -165,7 +165,7 @@ def test_send_message_uses_brevo_api_when_configured(monkeypatch):
     assert captured["url"] == "https://api.brevo.com/v3/smtp/email"
     assert captured["headers"]["api-key"] == "brevo-key"
     assert captured["json"] == {
-        "sender": {"name": "VDS HRMS", "email": "sender@example.com"},
+        "sender": {"name": "anix HRMS", "email": "sender@example.com"},
         "to": [{"email": "recipient@example.com"}],
         "subject": "Activation Test",
         "textContent": "Plain body",
@@ -183,7 +183,7 @@ def test_send_message_returns_false_when_brevo_key_missing(monkeypatch):
         subject="Activation Test",
         body="Plain body",
         from_email="sender@example.com",
-        from_name="VDS HRMS",
+        from_name="anix HRMS",
     )
 
     assert _send_message(message, db=None) is False

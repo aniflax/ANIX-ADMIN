@@ -37,7 +37,7 @@ const ROLES = [
 const ROLE_LABEL = ROLES.reduce((acc, r) => { acc[r.value] = r.label; return acc; }, {});
 
 const DEBOUNCE_MS = 350;
-const DEFAULT_SUBJECT = 'Official Communication from VDS HRMS';
+const DEFAULT_SUBJECT = 'Official Communication from anix HRMS';
 
 export default function OfficialCommunicationDialog({ open, onClose, departments = [] }) {
   const [mode, setMode] = useState('all');

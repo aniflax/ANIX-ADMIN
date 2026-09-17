@@ -126,7 +126,7 @@ def send_bulk_communication_endpoint(
         db,
         actor=current_user,
         mode=payload.mode,
-        subject=payload.subject or "Official Communication from VDS HRMS",
+        subject=payload.subject or "Official Communication from anix HRMS",
         body=payload.message,
         department_id=payload.department_id,
         roles=payload.roles,

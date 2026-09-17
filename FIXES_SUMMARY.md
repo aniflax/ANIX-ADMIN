@@ -1,4 +1,4 @@
-# VDS HRMS - Bug Fixes Summary
+# anix HRMS - Bug Fixes Summary
 
 ## Changes Completed ✅
 
@@ -114,12 +114,12 @@ WHERE role = 'HOD' AND department_id IS NULL;
 ### Option 1: Using psql (Recommended)
 ```bash
 cd backend/scripts
-psql -U postgres -d vds_hrms -f fix_hod_data.sh
+psql -U postgres -d anix_hrms -f fix_hod_data.sh
 ```
 
 ### Option 2: Direct SQL Query
 ```bash
-psql -U postgres -d vds_hrms -c "UPDATE sevaks SET role = 'SEVAK' WHERE role = 'HOD' AND department_id IS NULL;"
+psql -U postgres -d anix_hrms -c "UPDATE sevaks SET role = 'SEVAK' WHERE role = 'HOD' AND department_id IS NULL;"
 ```
 
 ---

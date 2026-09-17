@@ -117,7 +117,7 @@ def test_onboarding_returns_storage_errors_without_crashing(
         "/api/onboarding/register",
         data=data,
         files=files,
-        headers={"Origin": "https://fix-onboarding-production-re.vds-hrms.pages.dev"},
+        headers={"Origin": "https://fix-onboarding-production-re.anix-hrms.pages.dev"},
     )
 
     assert response.status_code == 500

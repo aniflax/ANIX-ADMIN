@@ -25,7 +25,7 @@ const warmMessages = [
   "Every small act of selfless service creates ripples of joy. Keep shining!",
   "Today is a new opportunity to serve with love and dedication.",
   "Your presence makes a difference. Have a wonderful and productive day!",
-  "You are the heart of VDS. Thank you for your dedication and devotion.",
+  "You are the heart of anix. Thank you for your dedication and devotion.",
   "May your day be filled with purpose, peace, and positivity!",
   "Together, we serve. Together, we grow. Have a beautiful day ahead!",
 ];

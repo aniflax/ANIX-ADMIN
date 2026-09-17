@@ -5,13 +5,13 @@ from app.models.sevak import RoleEnum
 def test_mail_config_round_trip_and_test_email(api_client_factory, db_session, make_sevak, make_config, monkeypatch):
     super_admin = make_sevak(
         sevak_id=10000,
-        email="superadmin@vds.org",
+        email="superadmin@anix.local",
         email_verified=True,
         role=RoleEnum.SUPER_ADMIN,
     )
     make_config(
         key="OFFICIAL_COMMUNICATION_EMAIL",
-        value="vaidicdharmasansthan.hr@gmail.com",
+        value="no-reply@anix-hrms.example",
         description="Official mailbox",
         access_level=ConfigAccessLevel.SUPER_ADMIN,
     )
@@ -29,19 +29,19 @@ def test_mail_config_round_trip_and_test_email(api_client_factory, db_session, m
     )
     make_config(
         key="SMTP_USER",
-        value="vaidicdharmasansthan.hr@gmail.com",
+        value="no-reply@anix-hrms.example",
         description="SMTP user",
         access_level=ConfigAccessLevel.SUPER_ADMIN,
     )
     make_config(
         key="EMAILS_FROM_NAME",
-        value="VDS HRMS",
+        value="anix HRMS",
         description="Sender name",
         access_level=ConfigAccessLevel.SUPER_ADMIN,
     )
     make_config(
         key="EMAILS_FROM_EMAIL",
-        value="vaidicdharmasansthan.hr@gmail.com",
+        value="no-reply@anix-hrms.example",
         description="Sender email",
         access_level=ConfigAccessLevel.SUPER_ADMIN,
     )
@@ -62,20 +62,20 @@ def test_mail_config_round_trip_and_test_email(api_client_factory, db_session, m
     response = client.get("/api/config/mail")
     assert response.status_code == 200
     payload = response.json()
-    assert payload["official_email"] == "vaidicdharmasansthan.hr@gmail.com"
+    assert payload["official_email"] == "no-reply@anix-hrms.example"
     assert payload["password_reset_link_validity_minutes"] == 10
     assert payload["smtp_password_set"] is True
 
     update_response = client.put(
         "/api/config/mail",
         json={
-            "official_email": "vaidicdharmasansthan.hr@gmail.com",
+            "official_email": "no-reply@anix-hrms.example",
             "smtp_server": "smtp.gmail.com",
             "smtp_port": 587,
-            "smtp_user": "vaidicdharmasansthan.hr@gmail.com",
+            "smtp_user": "no-reply@anix-hrms.example",
             "smtp_password": "new-app-password",
-            "from_name": "VDS HRMS",
-            "from_email": "vaidicdharmasansthan.hr@gmail.com",
+            "from_name": "anix HRMS",
+            "from_email": "no-reply@anix-hrms.example",
             "password_reset_link_validity_minutes": 12,
         },
     )
@@ -88,16 +88,16 @@ def test_mail_config_round_trip_and_test_email(api_client_factory, db_session, m
     monkeypatch.setattr("app.api.config.send_test_email", lambda **kwargs: True)
     test_response = client.post(
         "/api/config/mail/test",
-        json={"recipient_email": "ktejakrishna@gmail.com", "subject": "Smoke test"},
+        json={"recipient_email": "sevak@example.com", "subject": "Smoke test"},
     )
     assert test_response.status_code == 200
-    assert test_response.json()["sender"] == "vaidicdharmasansthan.hr@gmail.com"
+    assert test_response.json()["sender"] == "no-reply@anix-hrms.example"
 
 
 def test_config_list_hides_mail_transport_password(api_client_factory, make_sevak, make_config):
     super_admin = make_sevak(
         sevak_id=10000,
-        email="superadmin@vds.org",
+        email="superadmin@anix.local",
         email_verified=True,
         role=RoleEnum.SUPER_ADMIN,
     )

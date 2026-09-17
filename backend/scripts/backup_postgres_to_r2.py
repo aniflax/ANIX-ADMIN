@@ -35,7 +35,7 @@ def main() -> None:
     bucket_name = os.environ["R2_BUCKET_NAME"]
     prefix = os.getenv("BACKUP_PREFIX", "database-backups").strip("/")
     timestamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
-    object_key = f"{prefix}/vds-hrms-{timestamp}.sql.gz"
+    object_key = f"{prefix}/anix-hrms-{timestamp}.sql.gz"
 
     with tempfile.TemporaryDirectory() as temp_dir:
         dump_path = Path(temp_dir) / "backup.sql"

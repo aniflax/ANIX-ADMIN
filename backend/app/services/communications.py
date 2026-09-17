@@ -107,7 +107,7 @@ def send_bulk_communication(
         exclude_ids=exclude_ids,
     )
 
-    sender_name = f"{actor.first_name} {actor.last_name}".strip() or "VDS HRMS"
+    sender_name = f"{actor.first_name} {actor.last_name}".strip() or "anix HRMS"
     sent = 0
     failed = 0
     skipped_no_email = 0
@@ -140,6 +140,6 @@ def send_bulk_communication(
         "sent": sent,
         "failed": failed,
         "skipped_no_email": skipped_no_email,
-        "subject": (subject or "").strip() or "Communication from VDS HRMS",
+        "subject": (subject or "").strip() or "Communication from anix HRMS",
         "delivered_emails": delivered_emails,
     }
